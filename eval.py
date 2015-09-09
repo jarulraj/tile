@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # Evaluation
 
-# # TILE GROUP EXPERIMENTS
+###################################################################################                   
+# TILE GROUP EXPERIMENTS
+###################################################################################                   
 
 from __future__ import print_function
 import os
@@ -37,8 +39,10 @@ import matplotlib
 from options import *
 from functools import wraps       
 
+###################################################################################                   
+# LOGGING CONFIGURATION
+###################################################################################                   
 
-# # LOGGING CONFIGURATION
 LOG = logging.getLogger(__name__)
 LOG_handler = logging.StreamHandler()
 LOG_formatter = logging.Formatter(
@@ -49,8 +53,9 @@ LOG_handler.setFormatter(LOG_formatter)
 LOG.addHandler(LOG_handler)
 LOG.setLevel(logging.INFO)
 
-
-# # CONFIGURATION
+###################################################################################                   
+# OUTPUT CONFIGURATION
+###################################################################################                   
 
 BASE_DIR = os.path.dirname(__file__)
 OPT_FONT_NAME = 'Helvetica'
@@ -74,29 +79,6 @@ DATA_LABELS = []
 
 OPT_STACK_COLORS = ('#AFAFAF', '#F15854', '#5DA5DA', '#60BD68',  '#B276B2', '#DECF3F', '#F17CB0', '#B2912F', '#FAA43A')
 
-# # TILE GROUP
-PERF_LOCAL = "/usr/bin/perf"
-PERF = "/usr/lib/linux-tools/3.11.0-12-generic/perf"
-NUMACTL = "numactl"
-NUMACTL_FLAGS = "--membind=2"
-
-SYSTEMS = ("wal", "sp", "lsm", "opt_wal", "opt_sp", "opt_lsm")
-RECOVERY_SYSTEMS = ("wal", "lsm", "opt_wal", "opt_lsm")
-LATENCIES = ("160", "320", "1280")
-
-ENGINES = ['-a', '-s', '-m', '-w', '-c', '-l']
-
-YCSB_KEYS = 2000000
-YCSB_TXNS = 8000000
-YCSB_WORKLOAD_MIX = ("read-only", "read-heavy", "balanced", "write-heavy")
-
-YCSB_PERF_DIR = "../results/ycsb/performance/"
-
-LABELS = ("InP", "CoW", "Log", "NVM-InP", "NVM-CoW", "NVM-Log")
-
-TPCC_TXNS = 1000000
-TEST_TXNS = 500000
-
 # SET FONT
 
 LABEL_FONT_SIZE = 16
@@ -114,6 +96,27 @@ matplotlib.rcParams['text.usetex'] = True
 LABEL_FP = FontProperties(family=OPT_FONT_NAME, style='normal', size=LABEL_FONT_SIZE, weight='bold')
 TICK_FP = FontProperties(family=OPT_FONT_NAME, style='normal', size=TICK_FONT_SIZE)
 TINY_FP = FontProperties(family=OPT_FONT_NAME, style='normal', size=TINY_FONT_SIZE)
+
+###################################################################################                   
+# CONFIGURATION
+###################################################################################                   
+
+PERF_LOCAL = "/usr/bin/perf"
+PERF = "/usr/lib/linux-tools/3.11.0-12-generic/perf"
+
+OPERATORS = ("direct", "aggregate", "arithmetic")
+SELECTIVITY = (0.2, 0.4, 0.6, 0.8, 1.0)
+PROJECTIVITY = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
+LAYOUTS = ("row", "column", "hybrid")
+
+LOG_SELECTIVITY = (0.01, 0.1, 0.5, 1.0)
+
+
+PROJECTIVITY_DIR = "../results/ycsb/performance/"
+
+LABELS = ("InP", "CoW", "Log", "NVM-InP", "NVM-CoW", "NVM-Log")
+
+LOG_NAME = "tile_group.log"
 
 ###################################################################################                   
 # UTILS
@@ -185,7 +188,10 @@ def create_legend():
 
     for group in xrange(len(ENGINES)):        
         data = [1]
-        bars[group] = ax1.bar(ind + margin + (group * width), data, width, color=OPT_COLORS[group], hatch=OPT_PATTERNS[group * 2], linewidth=BAR_LINEWIDTH)
+        bars[group] = ax1.bar(ind + margin + (group * width), data, width, 
+                              color=OPT_COLORS[group], 
+                              hatch=OPT_PATTERNS[group * 2], 
+                              linewidth=BAR_LINEWIDTH)
         
     # LEGEND
     figlegend.legend(bars, LABELS, prop=LABEL_FP, loc=1, ncol=6, mode="expand", shadow=OPT_LEGEND_SHADOW, 
@@ -193,7 +199,7 @@ def create_legend():
 
     figlegend.savefig('legend.pdf')
 
-def create_ycsb_perf_bar_chart(datasets):
+def create_projectivity_chart(datasets):
     fig = plot.figure()
     ax1 = fig.add_subplot(111)
          
@@ -266,9 +272,8 @@ def create_ycsb_perf_bar_chart(datasets):
 # PLOT HELPERS                  
 ###################################################################################                   
 
-
-# YCSB PERF -- PLOT
-def ycsb_perf_plot(result_dir, latency_list, prefix):
+# PROJECTIVITY -- PLOT
+def projectivity_plot(result_dir, latency_list, prefix):
     for workload in YCSB_WORKLOAD_MIX:    
 
         for lat in latency_list:
@@ -285,222 +290,67 @@ def ycsb_perf_plot(result_dir, latency_list, prefix):
            
 ###################################################################################                   
 # EVAL                   
-###################################################################################                   
+###################################################################################
 
-# CLEANUP PMFS
+# PROJECTIVITY -- EVAL
+def projectivity_eval():
 
-SDV_DEVEL = "/data/devel/sdv-tools/"
-FS_ABS_PATH = "/mnt/pmfs/"
-
-def cleanup(log_file):
-    # LOCAL
-    if enable_local:        
-        subprocess.call(["rm -f " + FS_PATH + "./*"], shell=True)    
-           
-    # PMFS            
-    else:
-        cwd = os.getcwd()
-        os.chdir(SDV_DEVEL)
-        subprocess.call(['sudo', 'umount', '/mnt/pmfs'], stdout=log_file)
-        subprocess.call(['sudo', 'bash', 'mount_pmfs.sh'], stdout=log_file)        
-        os.chdir(FS_ABS_PATH)
-        subprocess.call(['sudo', 'mkdir', 'n-store'], stdout=log_file)
-        subprocess.call(['sudo', 'chown', 'user', 'n-store'], stdout=log_file)
-        os.chdir(cwd)    
-
-
-# YCSB PERF -- EVAL
-def ycsb_perf_eval(enable_sdv, enable_trials, log_name, result_dir, latency_list):        
-    dram_latency = 100
-    keys = YCSB_KEYS
-    txns = YCSB_TXNS
-                            
-    num_trials = 1 
-    if enable_trials: 
-        num_trials = 3
-    
     nvm_latencies = latency_list
     rw_mixes = YCSB_RW_MIXES
     skew_factors = YCSB_SKEW_FACTORS
     engines = ENGINES
     
     # LOG RESULTS
-    log_file = open(log_name, 'w')
+    log_file = open(LOG_NAME, 'w')
     log_file.write('Start :: %s \n' % datetime.datetime.now())
     
-    for nvm_latency in nvm_latencies:
+    for layout in LAYOUTS:
 
-        ostr = ("LATENCY %s \n" % nvm_latency)    
+        ostr = ("LAYOUT %s \n" % layout)  
         print (ostr, end="")
         log_file.write(ostr)
         log_file.flush()
         
-        if enable_sdv :
-            cwd = os.getcwd()
-            os.chdir(SDV_DIR)
-            subprocess.call(['sudo', SDV_SCRIPT, '--enable', '--pm-latency', str(nvm_latency)], stdout=log_file)
-            os.chdir(cwd)
-                   
-        for trial in range(num_trials):
-            # RW MIX
-            for rw_mix  in rw_mixes:
-                # SKEW FACTOR
-                for skew_factor  in skew_factors:
-                    ostr = ("--------------------------------------------------- \n")
-                    print (ostr, end="")
-                    log_file.write(ostr)
-                    ostr = ("TRIAL :: %d RW MIX :: %.1f SKEW :: %.2f \n" % (trial, rw_mix, skew_factor))
-                    print (ostr, end="")
-                    log_file.write(ostr)                    
-                    log_file.flush()
-                               
-                    for eng in engines:
-                        cleanup(log_file)
-                        subprocess.call([NUMACTL, NUMACTL_FLAGS, NSTORE, '-k', str(keys), '-x', str(txns), '-p', str(rw_mix), '-q', str(skew_factor), eng], stdout=log_file)
+        # START PG
+        start_pg()
+                           
+        # EXPERIMENTS        
+        for op in OPERATOR:
 
-    # RESET
-    if enable_sdv :
-        cwd = os.getcwd()
-        os.chdir(SDV_DIR)
-        subprocess.call(['sudo', SDV_SCRIPT, '--enable', '--pm-latency', "200"], stdout=log_file)
-        os.chdir(cwd)
- 
-    # PARSE LOG
+            for proj in PROJECTIVITY:
+
+                ostr = ("--------------------------------------------------- \n")
+                print (ostr, end="")
+                log_file.write(ostr)
+                
+                ostr = ("TRIAL :: %d LAYOUT :: %s OP :: %s PROJ :: %.1f \n" % (layout, op, proj))
+                print (ostr, end="")
+                log_file.write(ostr)                    
+                log_file.flush()
+                
+                # DO SOMETHING               
+                #cleanup(log_file)
+                #subprocess.call([NUMACTL, NUMACTL_FLAGS, NSTORE, '-k', str(keys), '-x', str(txns), '-p', str(rw_mix), '-q', str(skew_factor), eng], stdout=log_file)
+                
+                         
+    # FINISH LOG
     log_file.write('End :: %s \n' % datetime.datetime.now())
     log_file.close()   
-    log_file = open(log_name, "r")    
+    log_file = open(log_name, "r")
 
-    tput = {}
-    mean = {}
-    sdev = {}
-    latency = 0
-    rw_mix = 0.0
-    skew = 0.0
-    
-    skew_factors = []
-    nvm_latencies = []
-    engine_types = []
-    
-    for line in log_file:
-        if "LATENCY" in line:
-            entry = line.strip().split(' ');
-            if entry[0] == "LATENCY":
-                latency = entry[1]
-            if latency not in nvm_latencies:
-                nvm_latencies.append(latency)
-                    
-        if "RW MIX" in line:
-            entry = line.strip().split(' ');
-            trial = entry[2]
-            rw_mix = entry[6]
-            skew = entry[9]
-            
-            if skew not in skew_factors:
-                skew_factors.append(skew)
-       
-        if "Throughput" in line:
-            entry = line.strip().split(':');
-            engine_type = entry[0].split(' ');
-            val = float(entry[4]);
-            
-            if(engine_type[0] == "WAL"):
-                engine_type[0] = "wal"                
-            elif(engine_type[0] == "SP"):
-                engine_type[0] = "sp"
-            elif(engine_type[0] == "LSM"):
-                engine_type[0] = "lsm"
-            elif(engine_type[0] == "OPT_WAL"):
-                engine_type[0] = "opt_wal"
-            elif(engine_type[0] == "OPT_SP"):
-                engine_type[0] = "opt_sp"
-            elif(engine_type[0] == "OPT_LSM"):
-                engine_type[0] = "opt_lsm"
-            
-            if engine_type not in engine_types:
-                engine_types.append(engine_type)
-                            
-            key = (rw_mix, skew, latency, engine_type[0]);
-            if key in tput:
-                tput[key].append(val)
-            else:
-                tput[key] = [ val ]
-                            
-
-    # CLEAN UP RESULT DIR
-    subprocess.call(['rm', '-rf', result_dir])          
-    
-    for key in sorted(tput.keys()):
-        mean[key] = round(numpy.mean(tput[key]), 2)
-        mean[key] = str(mean[key]).rjust(10)
-            
-        sdev[key] = numpy.std(tput[key])
-        sdev[key] /= float(mean[key])
-        sdev[key] = round(sdev[key], 3)
-        sdev[key] = str(sdev[key]).rjust(10)
-        
-        engine_type = str(key[3]);        
-        if(key[0] == '0.0'):
-            workload_type = 'read-only'
-        elif(key[0] == '0.1'):
-            workload_type = 'read-heavy'
-        elif(key[0] == '0.5'):
-            workload_type = 'balanced'
-        elif(key[0] == '0.9'):
-            workload_type = 'write-heavy'
-    
-        nvm_latency = str(key[2]);
-        
-        result_directory = result_dir + engine_type + "/" + workload_type + "/" + nvm_latency + "/";
-        if not os.path.exists(result_directory):
-            os.makedirs(result_directory)
-
-        result_file_name = result_directory + "performance.csv"
-        result_file = open(result_file_name, "a")
-        result_file.write(str(key[1] + " , " + mean[key] + "\n"))
-        result_file.close()    
-                    
-    read_only = []
-    read_heavy = []
-    write_heavy = []
-    
-    # ARRANGE DATA INTO TABLES    
-    for key in sorted(mean.keys()):
-        if key[0] == '0.0':
-            read_only.append(str(mean[key] + "\t" + sdev[key] + "\t"))
-        elif key[0] == '0.1':
-            read_heavy.append(str(mean[key] + "\t" + sdev[key] + "\t"))
-        elif key[0] == '0.5':
-            write_heavy.append(str(mean[key] + "\t" + sdev[key] + "\t"))
-        
-    col_len = len(nvm_latencies) * len(engine_types)           
-        
-    ro_chunks = list(chunks(read_only, col_len))
-    print('\n'.join('\t'.join(map(str, row)) for row in zip(*ro_chunks)))
-    print('\n', end="")
-        
-    rh_chunks = list(chunks(read_heavy, col_len))
-    print('\n'.join('\t'.join(map(str, row)) for row in zip(*rh_chunks)))
-    print('\n', end="")
-        
-    wh_chunks = list(chunks(write_heavy, col_len))
-    print('\n'.join('\t'.join(map(str, row)) for row in zip(*wh_chunks)))
-    print('\n', end="")
-
-## ==============================================
-# # main
-## ==============================================
+###################################################################################                   
+# MAIN
+###################################################################################
 if __name__ == '__main__':
     
     parser = argparse.ArgumentParser(description='Run Tilegroup Experiments')
     
-    parser.add_argument("-y", "--ycsb_perf_eval", help='eval ycsb perf', action='store_true')
+    parser.add_argument("-p", "--projectivity", help='eval projectivity', action='store_true')
+    parser.add_argument("-s", "--selectivity", help='eval selectivity', action='store_true')
+    parser.add_argument("-o", "--operator", help='eval operator', action='store_true')
     
     args = parser.parse_args()
-
-    ycsb_perf_log_name = "ycsb_perf.log"
-            
-    ################################ YCSB
-    
-    if args.ycsb_perf_eval:
-        ycsb_perf_eval(enable_sdv, enable_trials, ycsb_perf_log_name, YCSB_PERF_DIR, LATENCIES)
+                    
+    if args.projectivity:
+        projectivity_eval()
     
