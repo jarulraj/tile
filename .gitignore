@@ -51,7 +51,7 @@ bin/*
 zfile
 
 # Plots
-results/*.pdf
+*.pdf
 /Debug
 misc/linux-examples/*
 results/

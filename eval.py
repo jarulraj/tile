@@ -184,93 +184,49 @@ def saveGraph(fig, output, width, height):
 # PLOT
 ###################################################################################                   
 
-def create_legend():
-    fig = pylab.figure()
-    ax1 = fig.add_subplot(111)
-
-    figlegend = pylab.figure(figsize=(11, 0.5))
-
-    num_items = len(ENGINES);   
-    ind = np.arange(1)  
-    margin = 0.10
-    width = (1.0 - 2 * margin) / num_items      
-      
-    bars = [None] * len(LABELS) * 2
-
-    for group in xrange(len(ENGINES)):        
-        data = [1]
-        bars[group] = ax1.bar(ind + margin + (group * width), data, width, 
-                              color=OPT_COLORS[group], 
-                              hatch=OPT_PATTERNS[group * 2], 
-                              linewidth=BAR_LINEWIDTH)
-        
-    # LEGEND
-    figlegend.legend(bars, LABELS, prop=LABEL_FP, loc=1, ncol=6, mode="expand", shadow=OPT_LEGEND_SHADOW, 
-                     frameon=False, borderaxespad=0.0, handleheight=2, handlelength=3.5)
-
-    figlegend.savefig('legend.pdf')
-
-def create_projectivity_chart(datasets):
+def create_projectivity_line_chart(datasets):
     fig = plot.figure()
     ax1 = fig.add_subplot(111)
          
-    x_values = YCSB_SKEW_FACTORS
+    # X-AXIS
+    x_values = PROJECTIVITY
     N = len(x_values)
-    x_labels = ["Low Skew", "High Skew"]
+    x_labels = x_values
 
-    num_items = len(ENGINES);   
+    num_items = len(LAYOUTS);
     ind = np.arange(N)  
-    margin = 0.10
-    width = (1.0 - 2 * margin) / num_items      
-    bars = [None] * len(LABELS) * 2
-
-    YLIMIT = 2000000
-
-    def autolabel(rects):
-        # attach some text labels
-        for rect in rects:
-            height = rect.get_height()
-            if height > YLIMIT:
-                label = '%.1f'%(height/1000000) + 'M'
-                ax1.text(rect.get_x()+rect.get_width()/2., 1.05*YLIMIT, label,
-                        ha='center', va='bottom', fontproperties=TINY_FP)
-
+    idx = 0
+    
+    YLIMIT = 100
+            
     # GROUP
-    for group in xrange(len(datasets)):
-        perf_data = []               
-
+    for group_index, group in enumerate(LAYOUTS):
+        group_data = []             
+        
         # LINE
-        for line in  xrange(len(datasets[group])):
-            for col in  xrange(len(datasets[group][line])):
-                if col == 1:
-                    perf_data.append(datasets[group][line][col])
+        for line_index, line in enumerate(x_values):            
+            group_data.append(datasets[group_index][line_index][1])
   
-        LOG.info("%s perf_data = %s ", LABELS[group], str(perf_data))
+        LOG.info("%s group_data = %s ", group, str(group_data))
         
-        bars[group] = ax1.bar(ind + margin + (group * width), perf_data, width, color=OPT_COLORS[group], hatch=OPT_PATTERNS[group * 2])        
-        autolabel(bars[group])
+        ax1.plot(x_values, group_data, color=OPT_LINE_COLORS[idx], linewidth=OPT_LINE_WIDTH, 
+                 marker=OPT_MARKERS[idx], markersize=OPT_MARKER_SIZE, label=str(group))        
+        
+        idx = idx + 1  
 
-    # RATIO
-    transposed_datasets = map(list,map(None,*datasets))
-    for type in xrange(N):
-        LOG.info("type = %f ", x_values[type])
-        get_ratio(transposed_datasets[type], True)
-        
     # GRID
     axes = ax1.get_axes()
     makeGrid(ax1)
       
-    # Y-AXIS
+    # Y-AXIS    
     ax1.yaxis.set_major_locator(MaxNLocator(5))
     ax1.minorticks_on()
-    ax1.set_ylim([0,YLIMIT])
+    ax1.set_ylabel("Throughput (txn/sec)", fontproperties=LABEL_FP)
+    #ax1.set_ylim([0, YLIMIT])
         
     # X-AXIS
     ax1.minorticks_on()
-    ax1.set_xticklabels(x_labels)
-    ax1.set_xticks(ind + 0.5)              
-    ax1.set_ylabel("Throughput (txn/sec)", fontproperties=LABEL_FP)
-    ax1.tick_params(axis='x', which='both', bottom='off', top='off')
+    ax1.set_xlabel("Fraction of Attributes Projected", fontproperties=LABEL_FP)
         
     for label in ax1.get_yticklabels() :
         label.set_fontproperties(TICK_FP)
@@ -284,20 +240,22 @@ def create_projectivity_chart(datasets):
 ###################################################################################                   
 
 # PROJECTIVITY -- PLOT
-def projectivity_plot(result_dir, latency_list, prefix):
-    for workload in YCSB_WORKLOAD_MIX:    
+def projectivity_plot():
+    
+    for operator in OPERATORS:    
+        print(operator)
+        datasets = []
 
-        for lat in latency_list:
-            datasets = []
-        
-            for sy in SYSTEMS:    
-                dataFile = loadDataFile(2, 2, os.path.realpath(os.path.join(result_dir, sy + "/" + workload + "/" + lat + "/performance.csv")))
-                datasets.append(dataFile)
-                                   
-            fig = create_ycsb_perf_bar_chart(datasets)
+        for layout in LAYOUTS:        
+            data_file = PROJECTIVITY_DIR + "/" + layout + "/" + operator + "/" + "projectivity.csv"
             
-            fileName = prefix + "ycsb-perf-%s-%s.pdf" % (workload, lat)
-            saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/1.5)
+            dataset = loadDataFile(10, 2, data_file)
+            datasets.append(dataset)
+
+        fig = create_projectivity_line_chart(datasets)
+        
+        fileName = "projectivity-%s.pdf" % (operator)
+        saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/1.5)
            
 ###################################################################################                   
 # EVAL HELPERS                   
@@ -487,10 +445,12 @@ if __name__ == '__main__':
     parser.add_argument("-s", "--selectivity", help='eval selectivity', action='store_true')
     parser.add_argument("-o", "--operator", help='eval operator', action='store_true')
     
-    parser.add_argument("-a", "--projectivity-plot", help='plot projectivity', action='store_true')
+    parser.add_argument("-a", "--projectivity_plot", help='plot projectivity', action='store_true')
     
     args = parser.parse_args()
                     
     if args.projectivity:
         projectivity_eval()
     
+    if args.projectivity_plot:                
+       projectivity_plot();                          
