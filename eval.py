@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# Evaluation
 
 ###################################################################################                   
 # TILE GROUP EXPERIMENTS
@@ -20,6 +19,9 @@ import argparse
 import pylab
 import datetime
 import math
+import time
+import fileinput
+from lxml import etree
 
 import numpy as np
 import matplotlib.pyplot as plot
@@ -101,8 +103,17 @@ TINY_FP = FontProperties(family=OPT_FONT_NAME, style='normal', size=TINY_FONT_SI
 # CONFIGURATION
 ###################################################################################                   
 
-PERF_LOCAL = "/usr/bin/perf"
-PERF = "/usr/lib/linux-tools/3.11.0-12-generic/perf"
+PG_CTL = "/usr/local/peloton/bin/pg_ctl"
+PG_DATA_DIR = "./data"
+PG_BUILD_DIR = "../peloton/build"
+OLTPBENCH_DIR = "../oltpbench"
+PG_CONFIG_FILE = PG_DATA_DIR + "/postgresql.conf"
+
+OLTPBENCH = "./oltpbenchmark"
+
+BENCHMARK_NAME = "hyadapt"
+CONFIG_FILE = "config/peloton_hyadapt_config.xml"
+OUTPUT_FILE = "outputfile"
 
 OPERATORS = ("direct", "aggregate", "arithmetic")
 SELECTIVITY = (0.2, 0.4, 0.6, 0.8, 1.0)
@@ -110,11 +121,9 @@ PROJECTIVITY = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
 LAYOUTS = ("row", "column", "hybrid")
 
 LOG_SELECTIVITY = (0.01, 0.1, 0.5, 1.0)
+SCALE_FACTOR = 1.0
 
-
-PROJECTIVITY_DIR = "../results/ycsb/performance/"
-
-LABELS = ("InP", "CoW", "Log", "NVM-InP", "NVM-CoW", "NVM-Log")
+PROJECTIVITY_DIR = "../results/projectivity/"
 
 LOG_NAME = "tile_group.log"
 
@@ -289,17 +298,98 @@ def projectivity_plot(result_dir, latency_list, prefix):
             saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/1.5)
            
 ###################################################################################                   
+# EVAL HELPERS                   
+###################################################################################
+
+# UPDATE POSTGRES CONFIG FILE
+def update_postgres_config_file(layout):
+    
+    text_to_search = "layout"
+    text_to_replace = layout
+    for line in fileinput.input(PG_CONFIG_FILE, inplace=True):
+
+        # LAYOUT UPDATE        
+        if text_to_search in line:
+            line = line.replace("row", text_to_replace)
+            line = line.replace("column", text_to_replace)
+            line = line.replace("hybrid", text_to_replace)
+            
+# EXECUTE PG
+def execute_pg(log_file, layout):
+    
+    cwd = os.getcwd()
+    os.chdir(PG_BUILD_DIR)
+    
+    update_postgres_config_file(layout)
+     
+    subprocess.call([PG_CTL, '-D', PG_DATA_DIR, 'stop'], stdout=log_file)
+    subprocess.call([PG_CTL, '-D', PG_DATA_DIR, 'start'], stdout=log_file)
+
+    os.chdir(cwd)
+
+# UPDATE OLTPBENCH CONFIG FILE
+def update_oltpbench_config_file(operator, projectivity, selectivity):
+
+    tree = etree.parse(CONFIG_FILE)
+    
+    root = tree.getroot()
+    
+    # SCALE FACTOR
+    root.find('scalefactor').text = str(SCALE_FACTOR)
+    
+    # SELECTIVITY
+    root.find('selectivity').text = str(selectivity)
+
+    fp = open(CONFIG_FILE, 'w')
+    fp.write(etree.tostring(root, pretty_print=True))
+    fp.close()
+            
+# RUN OLTPBENCH
+def run_oltpbenchmark(log_file):
+    
+    # cleanup     
+    subprocess.call(["rm -f " + OUTPUT_FILE+".*"], shell=True)   
+
+    # ./oltpbenchmark -b hyadapt -c config/peloton_hyadapt_config.xml 
+    # --create=true --load=true --execute=true -s 5 -o outputfile     
+    subprocess.call([OLTPBENCH, '-b', BENCHMARK_NAME, '-c', CONFIG_FILE,
+                     '--create=true', '--load=true', '--execute=true',
+                     '-s', '5', '-o', OUTPUT_FILE], stdout=log_file)
+
+# COLLECT STATS    
+def collect_stats():
+    fp = open(OUTPUT_FILE + ".summary")
+    lines = fp.readlines()
+    
+    print(lines[5])
+    
+    fp.close()
+
+# EXECUTE OLTPBENCH
+def execute_oltpbenchmark(log_file, operator, projectivity, selectivity):
+    cwd = os.getcwd()
+    os.chdir(OLTPBENCH_DIR)
+
+    # First, update the config file
+    update_oltpbench_config_file(operator, projectivity, selectivity)
+    
+    # Second, run benchmark
+    #run_oltpbenchmark(log_file)
+    
+    # Finally, collect stats
+    #collect_stats()
+    
+    os.chdir(cwd)
+
+###################################################################################                   
 # EVAL                   
 ###################################################################################
 
 # PROJECTIVITY -- EVAL
 def projectivity_eval():
 
-    nvm_latencies = latency_list
-    rw_mixes = YCSB_RW_MIXES
-    skew_factors = YCSB_SKEW_FACTORS
-    engines = ENGINES
-    
+    selectivity = 1.0
+
     # LOG RESULTS
     log_file = open(LOG_NAME, 'w')
     log_file.write('Start :: %s \n' % datetime.datetime.now())
@@ -311,32 +401,31 @@ def projectivity_eval():
         log_file.write(ostr)
         log_file.flush()
         
-        # START PG
-        start_pg()
+        # EXECUTE PG
+        execute_pg(log_file, layout)
                            
         # EXPERIMENTS        
-        for op in OPERATOR:
+        for operator in OPERATORS:
 
-            for proj in PROJECTIVITY:
+            ostr = ("--------------------------------------------------- \n")
+            print (ostr, end="")
+            log_file.write(ostr)
 
-                ostr = ("--------------------------------------------------- \n")
-                print (ostr, end="")
-                log_file.write(ostr)
+            for projectivity in PROJECTIVITY:
                 
-                ostr = ("TRIAL :: %d LAYOUT :: %s OP :: %s PROJ :: %.1f \n" % (layout, op, proj))
+                ostr = ("LAYOUT :: %s OP :: %s PROJ :: %.1f \n" % (layout, operator, projectivity))
                 print (ostr, end="")
                 log_file.write(ostr)                    
                 log_file.flush()
-                
-                # DO SOMETHING               
-                #cleanup(log_file)
-                #subprocess.call([NUMACTL, NUMACTL_FLAGS, NSTORE, '-k', str(keys), '-x', str(txns), '-p', str(rw_mix), '-q', str(skew_factor), eng], stdout=log_file)
+                                                
+                # EXECUTE BENCHMARK
+                execute_oltpbenchmark(log_file, operator, projectivity, selectivity)
                 
                          
     # FINISH LOG
     log_file.write('End :: %s \n' % datetime.datetime.now())
     log_file.close()   
-    log_file = open(log_name, "r")
+    log_file = open(LOG_NAME, "r")
 
 ###################################################################################                   
 # MAIN
