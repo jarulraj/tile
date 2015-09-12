@@ -120,11 +120,14 @@ BENCHMARK_NAME = "hyadapt"
 CONFIG_FILE = "config/peloton_hyadapt_config.xml"
 OUTPUT_FILE = "outputfile"
 
-OPERATORS = ("direct", "aggregate", "arithmetic")
+LAYOUTS = ("row", "column", "hybrid")
+OPERATORS = ("project", "aggregate", "arithmetic")
+
 SELECTIVITY = (0.2, 0.4, 0.6, 0.8, 1.0)
+
 #PROJECTIVITY = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
 PROJECTIVITY = (0.1, 0.5, 0.9)
-LAYOUTS = ("row", "column", "hybrid")
+
 
 LOG_SELECTIVITY = (0.01, 0.1, 0.5, 1.0)
 SCALE_FACTOR = 1.0
@@ -276,7 +279,6 @@ def update_postgres_config_file(layout):
     
     text_to_search = "layout"
     text_to_replace = layout
-    print(PG_CONFIG_FILE)
     
     for line in fileinput.input(PG_CONFIG_FILE, inplace=True):        
         # LAYOUT UPDATE
@@ -386,7 +388,7 @@ def execute_oltpbenchmark(log_file, layout, operator, projectivity, selectivity,
     update_oltpbench_config_file(operator, projectivity, selectivity)
     
     # Second, run benchmark
-    #run_oltpbenchmark(log_file)
+    run_oltpbenchmark(log_file)
         
     # Finally, collect stats
     collect_stats(layout, operator, projectivity, selectivity, 
