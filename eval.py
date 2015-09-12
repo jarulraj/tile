@@ -329,7 +329,7 @@ def update_oltpbench_config_file(operator, projectivity, selectivity):
     weights.text = workload_string
     print("WORKLOAD : " + workload_string)
     
-    time.text = str(TIME)
+    time.text = str(int(TIME))
         
     fp = open(CONFIG_FILE, 'w')
     fp.write(etree.tostring(root, pretty_print=True))
@@ -355,6 +355,7 @@ def collect_stats(layout, operator, projectivity, selectivity, result_dir,
     
     # Collect info
     stat = lines[5].rstrip()
+    print("TPUT :: " + stat)
     
     result_directory = result_dir + "/" + layout + "/" + operator
     if not os.path.exists(result_directory):
@@ -376,7 +377,7 @@ def execute_oltpbenchmark(log_file, layout, operator, projectivity, selectivity,
     update_oltpbench_config_file(operator, projectivity, selectivity)
     
     # Second, run benchmark
-    #run_oltpbenchmark(log_file)
+    run_oltpbenchmark(log_file)
         
     # Finally, collect stats
     collect_stats(layout, operator, projectivity, selectivity, 
