@@ -103,12 +103,17 @@ TINY_FP = FontProperties(family=OPT_FONT_NAME, style='normal', size=TINY_FONT_SI
 # CONFIGURATION
 ###################################################################################                   
 
-PG_CTL = "/usr/local/peloton/bin/pg_ctl"
-PG_DATA_DIR = "./data"
-PG_BUILD_DIR = "../peloton/build"
-OLTPBENCH_DIR = "../oltpbench"
+BASE_DIR = os.path.dirname(os.path.realpath(__file__))
+
+PG_BUILD_DIR = BASE_DIR + "/../peloton/build"
+OLTPBENCH_DIR = BASE_DIR + "/../oltpbench"
+
+PG_DATA_DIR = PG_BUILD_DIR + "/data"
 PG_CONFIG_FILE = PG_DATA_DIR + "/postgresql.conf"
 
+PROJECTIVITY_DIR = BASE_DIR + "/results/projectivity/"
+
+PG_CTL = "/usr/local/peloton/bin/pg_ctl"
 OLTPBENCH = "./oltpbenchmark"
 
 BENCHMARK_NAME = "hyadapt"
@@ -124,9 +129,6 @@ LAYOUTS = ("row", "column", "hybrid")
 LOG_SELECTIVITY = (0.01, 0.1, 0.5, 1.0)
 SCALE_FACTOR = 1.0
 TIME = 10.0
-
-BASE_DIR = os.path.dirname(os.path.realpath(__file__))
-PROJECTIVITY_DIR = BASE_DIR + "/results/projectivity/"
 
 LOG_NAME = "tile_group.log"
 
@@ -274,13 +276,16 @@ def update_postgres_config_file(layout):
     
     text_to_search = "layout"
     text_to_replace = layout
-    for line in fileinput.input(PG_CONFIG_FILE, inplace=True):
-
-        # LAYOUT UPDATE        
+    print(PG_CONFIG_FILE)
+    
+    for line in fileinput.input(PG_CONFIG_FILE, inplace=True):        
+        # LAYOUT UPDATE
         if text_to_search in line:
             line = line.replace("row", text_to_replace)
             line = line.replace("column", text_to_replace)
             line = line.replace("hybrid", text_to_replace)
+            
+        print(line, end='')
             
 # EXECUTE PG
 def execute_pg(log_file, layout):
@@ -381,7 +386,7 @@ def execute_oltpbenchmark(log_file, layout, operator, projectivity, selectivity,
     update_oltpbench_config_file(operator, projectivity, selectivity)
     
     # Second, run benchmark
-    run_oltpbenchmark(log_file)
+    #run_oltpbenchmark(log_file)
         
     # Finally, collect stats
     collect_stats(layout, operator, projectivity, selectivity, 
