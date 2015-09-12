@@ -122,8 +122,10 @@ LAYOUTS = ("row", "column", "hybrid")
 
 LOG_SELECTIVITY = (0.01, 0.1, 0.5, 1.0)
 SCALE_FACTOR = 1.0
+TIME = 10.0
 
-PROJECTIVITY_DIR = "../results/projectivity/"
+BASE_DIR = os.path.dirname(os.path.realpath(__file__))
+PROJECTIVITY_DIR = BASE_DIR + "/results/projectivity/"
 
 LOG_NAME = "tile_group.log"
 
@@ -301,6 +303,13 @@ def projectivity_plot(result_dir, latency_list, prefix):
 # EVAL HELPERS                   
 ###################################################################################
 
+# CLEAN UP RESULT DIR
+def clean_up_dir(result_directory):
+
+    subprocess.call(['rm', '-rf', result_directory])
+    if not os.path.exists(result_directory):
+        os.makedirs(result_directory)
+
 # UPDATE POSTGRES CONFIG FILE
 def update_postgres_config_file(layout):
     
@@ -340,6 +349,30 @@ def update_oltpbench_config_file(operator, projectivity, selectivity):
     # SELECTIVITY
     root.find('selectivity').text = str(selectivity)
 
+    workload = [0] * 30
+
+    # OPERATOR
+    op_index = OPERATORS.index(operator)    
+
+    # PROJECTIVITY
+    proj_index = projectivity * 10 - 1
+    
+    if(op_index <= 2):
+        workload[op_index * 10 + int(proj_index)] = 100
+
+    # WORKLOAD
+    works = root.find('works')
+    work = works.find('work') 
+       
+    weights = work.find('weights')
+    time = work.find('time')
+    
+    workload_string = ", ".join( repr(e) for e in workload)
+    weights.text = workload_string
+    print("WORKLOAD : " + workload_string)
+    
+    time.text = str(TIME)
+        
     fp = open(CONFIG_FILE, 'w')
     fp.write(etree.tostring(root, pretty_print=True))
     fp.close()
@@ -357,16 +390,27 @@ def run_oltpbenchmark(log_file):
                      '-s', '5', '-o', OUTPUT_FILE], stdout=log_file)
 
 # COLLECT STATS    
-def collect_stats():
+def collect_stats(layout, operator, projectivity, selectivity, result_dir,
+                  result_file_name):
     fp = open(OUTPUT_FILE + ".summary")
     lines = fp.readlines()
     
-    print(lines[5])
+    # Collect info
+    stat = lines[5].rstrip()
+    
+    result_directory = result_dir + "/" + layout + "/" + operator
+    if not os.path.exists(result_directory):
+        os.makedirs(result_directory)  
+    result_file_name = result_directory + "/" + result_file_name
+    result_file = open(result_file_name, "a")
+    result_file.write(str(projectivity) + " , " + str(stat) + "\n")
+    result_file.close()    
     
     fp.close()
 
 # EXECUTE OLTPBENCH
-def execute_oltpbenchmark(log_file, operator, projectivity, selectivity):
+def execute_oltpbenchmark(log_file, layout, operator, projectivity, selectivity,
+                          result_dir, result_file_name):
     cwd = os.getcwd()
     os.chdir(OLTPBENCH_DIR)
 
@@ -375,9 +419,10 @@ def execute_oltpbenchmark(log_file, operator, projectivity, selectivity):
     
     # Second, run benchmark
     #run_oltpbenchmark(log_file)
-    
+        
     # Finally, collect stats
-    #collect_stats()
+    collect_stats(layout, operator, projectivity, selectivity, 
+                  result_dir, result_file_name)
     
     os.chdir(cwd)
 
@@ -393,6 +438,9 @@ def projectivity_eval():
     # LOG RESULTS
     log_file = open(LOG_NAME, 'w')
     log_file.write('Start :: %s \n' % datetime.datetime.now())
+    
+    # CLEAN UP RESULT DIR
+    clean_up_dir(PROJECTIVITY_DIR)
     
     for layout in LAYOUTS:
 
@@ -419,7 +467,8 @@ def projectivity_eval():
                 log_file.flush()
                                                 
                 # EXECUTE BENCHMARK
-                execute_oltpbenchmark(log_file, operator, projectivity, selectivity)
+                execute_oltpbenchmark(log_file, layout, operator, projectivity, selectivity,
+                                      PROJECTIVITY_DIR, "projectivity.csv")
                 
                          
     # FINISH LOG
@@ -437,6 +486,8 @@ if __name__ == '__main__':
     parser.add_argument("-p", "--projectivity", help='eval projectivity', action='store_true')
     parser.add_argument("-s", "--selectivity", help='eval selectivity', action='store_true')
     parser.add_argument("-o", "--operator", help='eval operator', action='store_true')
+    
+    parser.add_argument("-a", "--projectivity-plot", help='plot projectivity', action='store_true')
     
     args = parser.parse_args()
                     
