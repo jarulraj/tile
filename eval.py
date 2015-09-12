@@ -117,7 +117,8 @@ OUTPUT_FILE = "outputfile"
 
 OPERATORS = ("direct", "aggregate", "arithmetic")
 SELECTIVITY = (0.2, 0.4, 0.6, 0.8, 1.0)
-PROJECTIVITY = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
+#PROJECTIVITY = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
+PROJECTIVITY = (0.1, 0.5, 0.9)
 LAYOUTS = ("row", "column", "hybrid")
 
 LOG_SELECTIVITY = (0.01, 0.1, 0.5, 1.0)
@@ -291,6 +292,9 @@ def execute_pg(log_file, layout):
      
     subprocess.call([PG_CTL, '-D', PG_DATA_DIR, 'stop'], stdout=log_file)
     subprocess.call([PG_CTL, '-D', PG_DATA_DIR, 'start'], stdout=log_file)
+
+    # Wait a bit for server to start
+    time.sleep(3)
 
     os.chdir(cwd)
 
