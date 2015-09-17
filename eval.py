@@ -108,21 +108,19 @@ BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 PELOTON_BUILD_DIR = BASE_DIR + "/../peloton/build"
 HYADAPT = PELOTON_BUILD_DIR + "/src/hyadapt"
 
-OUTPUT_FILE = "/outputfile.summary"
+OUTPUT_FILE = "outputfile.summary"
 
 PROJECTIVITY_DIR = BASE_DIR + "/results/projectivity/"
 
-LAYOUTS = ("hybrid", "column", "row")
-OPERATORS = ("project", "aggregate", "arithmetic")
+LAYOUTS = ("row", "column", "hybrid")
+OPERATORS = ("direct", "aggregate", "arithmetic")
 
 SELECTIVITY = (0.2, 0.4, 0.6, 0.8, 1.0)
 
 #PROJECTIVITY = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
 PROJECTIVITY = (0.1, 0.5, 1.0)
 
-LOG_SELECTIVITY = (0.01, 0.1, 0.5, 1.0)
-
-SCALE_FACTOR = 1.0
+SCALE_FACTOR = 10.0
 TRANSACTION_COUNT = 10
 
 LOG_NAME = "tile_group.log"
@@ -218,13 +216,13 @@ def create_projectivity_line_chart(datasets):
 
     # Y-AXIS
     ax1.yaxis.set_major_locator(MaxNLocator(5))
-    ax1.minorticks_on()
-    ax1.set_ylabel("Throughput (txn/sec)", fontproperties=LABEL_FP)
+    ax1.minorticks_off()
+    ax1.set_ylabel("Execution time (sec)", fontproperties=LABEL_FP)
     #ax1.set_ylim([0, YLIMIT])
 
     # X-AXIS
-    ax1.minorticks_on()
     ax1.set_xlabel("Fraction of Attributes Projected", fontproperties=LABEL_FP)
+    ax1.set_xlim([0.05, 1.05])
 
     for label in ax1.get_yticklabels() :
         label.set_fontproperties(TICK_FP)
@@ -273,8 +271,21 @@ def run_oltpbenchmark(log_file, layout, operator,
     # cleanup
     subprocess.call(["rm -f " + OUTPUT_FILE], shell=True)
 
-    layout_index = LAYOUTS.index(layout)
-    operator_index = OPERATORS.index(operator)
+    layout_index = -1
+    if(layout == "row"):
+        layout_index = 0
+    elif(layout == "column"):
+        layout_index = 1    
+    elif(layout == "hybrid"):
+        layout_index = 2
+
+    operator_index = 0
+    if(operator == "direct"):
+        operator_index = 1
+    elif(operator == "aggregate"):
+        operator_index = 2    
+    elif(operator == "arithmetic"):
+        operator_index = 3
 
     subprocess.call([HYADAPT, 
                      "-l", str(layout_index), 
@@ -289,7 +300,7 @@ def run_oltpbenchmark(log_file, layout, operator,
 def collect_stats(layout, operator, projectivity, selectivity, result_dir,
                   result_file_name):
 
-    fp = open(PELOTON_BUILD_DIR + OUTPUT_FILE)
+    fp = open(OUTPUT_FILE)
     lines = fp.readlines()
 
     # Collect info
