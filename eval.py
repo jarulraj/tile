@@ -118,9 +118,9 @@ OPERATORS = ("direct", "aggregate", "arithmetic")
 SELECTIVITY = (0.2, 0.4, 0.6, 0.8, 1.0)
 
 #PROJECTIVITY = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
-PROJECTIVITY = (0.1, 0.5, 1.0)
+PROJECTIVITY = (0.1, 0.3, 0.5, 0.7, 0.9)
 
-SCALE_FACTOR = 10.0
+SCALE_FACTOR = 20.0
 TRANSACTION_COUNT = 10
 
 LOG_NAME = "tile_group.log"
@@ -180,6 +180,32 @@ def saveGraph(fig, output, width, height):
 # PLOT
 ###################################################################################
 
+def create_legend():
+    fig = pylab.figure()
+    ax1 = fig.add_subplot(111)
+
+    figlegend = pylab.figure(figsize=(6, 0.5))
+    idx = 0
+    lines = [None] * len(LAYOUTS)
+
+    layouts = ("Row", "Column", "Hybrid")
+             
+    for group in xrange(len(LAYOUTS)):        
+        data = [1]
+        x_values = [1]
+        
+        lines[idx], = ax1.plot(x_values, data, color=OPT_LINE_COLORS[idx], linewidth=OPT_LINE_WIDTH, 
+                 marker=OPT_MARKERS[idx], markersize=OPT_MARKER_SIZE, label=str(group))        
+        
+        idx = idx + 1
+                
+    # LEGEND
+    figlegend.legend(lines,  layouts, prop=LABEL_FP, loc=1, ncol=4, mode="expand", shadow=OPT_LEGEND_SHADOW, 
+                     frameon=False, borderaxespad=0.0, handleheight=2, handlelength=3.5)
+
+    figlegend.savefig('legend.pdf')
+
+
 def create_projectivity_line_chart(datasets):
     fig = plot.figure()
     ax1 = fig.add_subplot(111)
@@ -222,7 +248,7 @@ def create_projectivity_line_chart(datasets):
 
     # X-AXIS
     ax1.set_xlabel("Fraction of Attributes Projected", fontproperties=LABEL_FP)
-    ax1.set_xlim([0.05, 1.05])
+    ax1.set_xlim([0.0, 1.0])
 
     for label in ax1.get_yticklabels() :
         label.set_fontproperties(TICK_FP)
@@ -396,3 +422,7 @@ if __name__ == '__main__':
 
     if args.projectivity_plot:
        projectivity_plot();
+
+    create_legend()
+    
+    
