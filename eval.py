@@ -120,8 +120,8 @@ SELECTIVITY = (0.2, 0.4, 0.6, 0.8, 1.0)
 #PROJECTIVITY = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
 PROJECTIVITY = (0.1, 0.3, 0.5, 0.7, 0.9)
 
-SCALE_FACTOR = 100.0
-TRANSACTION_COUNT = 10
+SCALE_FACTOR = 1000.0
+TRANSACTION_COUNT = 1
 
 LOG_NAME = "tile_group.log"
 
@@ -423,6 +423,6 @@ if __name__ == '__main__':
     if args.projectivity_plot:
        projectivity_plot();
 
-    create_legend()
+    #create_legend()
     
     
