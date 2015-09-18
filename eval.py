@@ -120,8 +120,10 @@ SELECTIVITY = (0.2, 0.4, 0.6, 0.8, 1.0)
 #PROJECTIVITY = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
 PROJECTIVITY = (0.1, 0.3, 0.5, 0.7, 0.9)
 
-SCALE_FACTOR = 1000.0
+SCALE_FACTOR = 100.0
 TRANSACTION_COUNT = 1
+
+PROJECTIVITY_EXPERIMENT = 1
 
 LOG_NAME = "tile_group.log"
 
@@ -189,18 +191,18 @@ def create_legend():
     lines = [None] * len(LAYOUTS)
 
     layouts = ("Row", "Column", "Hybrid")
-             
-    for group in xrange(len(LAYOUTS)):        
+
+    for group in xrange(len(LAYOUTS)):
         data = [1]
         x_values = [1]
-        
-        lines[idx], = ax1.plot(x_values, data, color=OPT_LINE_COLORS[idx], linewidth=OPT_LINE_WIDTH, 
-                 marker=OPT_MARKERS[idx], markersize=OPT_MARKER_SIZE, label=str(group))        
-        
+
+        lines[idx], = ax1.plot(x_values, data, color=OPT_LINE_COLORS[idx], linewidth=OPT_LINE_WIDTH,
+                 marker=OPT_MARKERS[idx], markersize=OPT_MARKER_SIZE, label=str(group))
+
         idx = idx + 1
-                
+
     # LEGEND
-    figlegend.legend(lines,  layouts, prop=LABEL_FP, loc=1, ncol=4, mode="expand", shadow=OPT_LEGEND_SHADOW, 
+    figlegend.legend(lines,  layouts, prop=LABEL_FP, loc=1, ncol=4, mode="expand", shadow=OPT_LEGEND_SHADOW,
                      frameon=False, borderaxespad=0.0, handleheight=2, handlelength=3.5)
 
     figlegend.savefig('legend.pdf')
@@ -290,70 +292,59 @@ def clean_up_dir(result_directory):
     if not os.path.exists(result_directory):
         os.makedirs(result_directory)
 
-# RUN OLTPBENCH
-def run_oltpbenchmark(log_file, layout, operator, 
-                      projectivity, selectivity):
+# RUN EXPERIMENT
+def run_experiment(experiment_type):
 
     # cleanup
     subprocess.call(["rm -f " + OUTPUT_FILE], shell=True)
 
-    layout_index = -1
-    if(layout == "row"):
-        layout_index = 0
-    elif(layout == "column"):
-        layout_index = 1    
-    elif(layout == "hybrid"):
-        layout_index = 2
-
-    operator_index = 0
-    if(operator == "direct"):
-        operator_index = 1
-    elif(operator == "aggregate"):
-        operator_index = 2    
-    elif(operator == "arithmetic"):
-        operator_index = 3
-
-    subprocess.call([HYADAPT, 
-                     "-l", str(layout_index), 
-                     "-o", str(operator_index),
-                     "-s", str(selectivity),
-                     "-p", str(projectivity),
-                     "-t", str(TRANSACTION_COUNT),
-                     "-k", str(SCALE_FACTOR)], 
-                    stdout=log_file)
+    subprocess.call([HYADAPT,
+                     "-e", str(experiment_type),
+                     "-k", str(SCALE_FACTOR),
+                     "-t", str(TRANSACTION_COUNT)])
+        
 
 # COLLECT STATS
-def collect_stats(layout, operator, projectivity, selectivity, result_dir,
+def collect_stats(result_dir,
                   result_file_name):
 
     fp = open(OUTPUT_FILE)
     lines = fp.readlines()
-
-    # Collect info
-    stat = lines[0].rstrip()
-    print("TIME :: " + stat)
-
-    result_directory = result_dir + "/" + layout + "/" + operator
-    if not os.path.exists(result_directory):
-        os.makedirs(result_directory)
-    result_file_name = result_directory + "/" + result_file_name
-    result_file = open(result_file_name, "a")
-    result_file.write(str(projectivity) + " , " + str(stat) + "\n")
-    result_file.close()
-
     fp.close()
 
-# EXECUTE 
-def execute_benchmark(log_file, layout, operator, projectivity, selectivity,
-                          result_dir, result_file_name):
+    for line in lines:
+        data = line.split()
 
-    # First, run benchmark
-    run_oltpbenchmark(log_file, layout, operator, projectivity, selectivity)
+        # Collect info
+        layout = data[0]
+        operator = data[1]
+        selectivity = data[2]
+        projectivity = data[3]
+        stat = data[4]
+                
+        if(layout == "0"):
+            layout = "row"
+        elif(layout == "1"):
+            layout = "column"
+        elif(layout == "2"):
+            layout = "hybrid"
+
+        if(operator == "1"):
+            operator = "direct"
+        elif(operator == "2"):
+            operator = "aggregate"
+        elif(operator == "3"):
+            operator = "arithmetic"
     
-    # Then, collect stats
-    collect_stats(layout, operator, projectivity, selectivity,
-                  result_dir, result_file_name)
-
+        result_directory = result_dir + "/" + layout + "/" + operator
+                 
+        if not os.path.exists(result_directory):
+            os.makedirs(result_directory)
+        file_name = result_directory + "/" + result_file_name
+                
+        result_file = open(file_name, "a")
+        result_file.write(str(projectivity) + " , " + str(stat) + "\n")
+        result_file.close()
 
 ###################################################################################
 # EVAL
@@ -362,8 +353,6 @@ def execute_benchmark(log_file, layout, operator, projectivity, selectivity,
 # PROJECTIVITY -- EVAL
 def projectivity_eval():
 
-    selectivity = 1.0
-
     # LOG RESULTS
     log_file = open(LOG_NAME, 'w')
     log_file.write('Start :: %s \n' % datetime.datetime.now())
@@ -371,31 +360,11 @@ def projectivity_eval():
     # CLEAN UP RESULT DIR
     clean_up_dir(PROJECTIVITY_DIR)
 
-    for layout in LAYOUTS:
+    # RUN EXPERIMENT
+    run_experiment(PROJECTIVITY_EXPERIMENT)
 
-        ostr = ("LAYOUT %s \n" % layout)
-        print (ostr, end="")
-        log_file.write(ostr)
-        log_file.flush()        
-
-        # EXPERIMENTS
-        for operator in OPERATORS:
-
-            ostr = ("--------------------------------------------------- \n")
-            print (ostr, end="")
-            log_file.write(ostr)
-
-            for projectivity in PROJECTIVITY:
-
-                ostr = ("LAYOUT :: %s OP :: %s PROJ :: %.1f \n" % (layout, operator, projectivity))
-                print (ostr, end="")
-                log_file.write(ostr)
-                log_file.flush()
-
-                # EXECUTE BENCHMARK
-                execute_benchmark(log_file, layout, operator, projectivity, selectivity,
-                                  PROJECTIVITY_DIR, "projectivity.csv")
-
+    # COLLECT STATS
+    collect_stats(PROJECTIVITY_DIR, "projectivity.csv")    
 
     # FINISH LOG
     log_file.write('End :: %s \n' % datetime.datetime.now())
@@ -424,5 +393,5 @@ if __name__ == '__main__':
        projectivity_plot();
 
     #create_legend()
-    
-    
+
+
