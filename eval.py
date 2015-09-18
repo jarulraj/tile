@@ -112,6 +112,7 @@ OUTPUT_FILE = "outputfile.summary"
 
 PROJECTIVITY_DIR = BASE_DIR + "/results/projectivity/"
 SELECTIVITY_DIR = BASE_DIR + "/results/selectivity/"
+OPERATOR_DIR = BASE_DIR + "/results/operator/"
 
 LAYOUTS = ("row", "column", "hybrid")
 OPERATORS = ("direct", "aggregate", "arithmetic")
@@ -119,11 +120,14 @@ OPERATORS = ("direct", "aggregate", "arithmetic")
 SELECTIVITY = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
 PROJECTIVITY = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
 
+OP_SELECTIVITY = (0.01, 0.5, 1.0)
+
 SCALE_FACTOR = 1000.0
 TRANSACTION_COUNT = 3
 
 PROJECTIVITY_EXPERIMENT = 1
-SELECTIVITY_EXPERIMENT = 1
+SELECTIVITY_EXPERIMENT = 2
+OPERATOR_EXPERIMENT = 3
 
 ###################################################################################
 # UTILS
@@ -308,6 +312,57 @@ def create_selectivity_line_chart(datasets):
 
     return (fig)
 
+def create_operator_line_chart(datasets):
+    fig = plot.figure()
+    ax1 = fig.add_subplot(111)
+
+    # X-AXIS
+    x_values = PROJECTIVITY
+    N = len(x_values)
+    x_labels = x_values
+
+    num_items = len(LAYOUTS);
+    ind = np.arange(N)
+    idx = 0
+
+    YLIMIT = 100
+
+    # GROUP
+    for group_index, group in enumerate(LAYOUTS):
+        group_data = []
+
+        # LINE
+        for line_index, line in enumerate(x_values):
+            group_data.append(datasets[group_index][line_index][1])
+
+        LOG.info("%s group_data = %s ", group, str(group_data))
+
+        ax1.plot(x_values, group_data, color=OPT_LINE_COLORS[idx], linewidth=OPT_LINE_WIDTH,
+                 marker=OPT_MARKERS[idx], markersize=OPT_MARKER_SIZE, label=str(group))
+
+        idx = idx + 1
+
+    # GRID
+    axes = ax1.get_axes()
+    makeGrid(ax1)
+
+    # Y-AXIS
+    ax1.yaxis.set_major_locator(MaxNLocator(5))
+    ax1.minorticks_off()
+    ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
+    #ax1.set_ylim([0, YLIMIT])
+
+    # X-AXIS
+    ax1.set_xlabel("Fraction of Attributes Selected", fontproperties=LABEL_FP)
+    ax1.set_xlim([0.0, 1.1])
+
+    for label in ax1.get_yticklabels() :
+        label.set_fontproperties(TICK_FP)
+    for label in ax1.get_xticklabels() :
+        label.set_fontproperties(TICK_FP)
+
+    return (fig)
+
 ###################################################################################
 # PLOT HELPERS
 ###################################################################################
@@ -348,6 +403,26 @@ def selectivity_plot():
         fileName = "selectivity-%s.pdf" % (operator)
         saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/1.5)
 
+# OPERATOR -- PLOT
+def operator_plot():
+
+    for selectivity in OP_SELECTIVITY:
+        print(selectivity)
+        datasets = []
+
+        for layout in LAYOUTS:
+            if selectivity == 1.0: selectivity = 1
+            data_file = OPERATOR_DIR + "/" + layout + "/" + str(selectivity) + "/" + "operator.csv"
+
+            dataset = loadDataFile(10, 2, data_file)
+            datasets.append(dataset)
+
+        fig = create_operator_line_chart(datasets)
+
+        fileName = "operator-%s.pdf" % (str(selectivity))
+        saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/1.5)
+
+
 ###################################################################################
 # EVAL HELPERS
 ###################################################################################
@@ -373,7 +448,8 @@ def run_experiment(experiment_type):
 
 # COLLECT STATS
 def collect_stats(result_dir,
-                  result_file_name):
+                  result_file_name,
+                  category):
 
     fp = open(OUTPUT_FILE)
     lines = fp.readlines()
@@ -403,7 +479,12 @@ def collect_stats(result_dir,
         elif(operator == "3"):
             operator = "arithmetic"
 
-        result_directory = result_dir + "/" + layout + "/" + operator
+        # OPERATOR CATEGORY
+        if category == 1:
+            result_directory = result_dir + "/" + layout + "/" + operator
+        # SELECTIVITY CATEGORY
+        elif category == 2:
+            result_directory = result_dir + "/" + layout + "/" + str(selectivity)
 
         if not os.path.exists(result_directory):
             os.makedirs(result_directory)
@@ -427,7 +508,7 @@ def projectivity_eval():
     run_experiment(PROJECTIVITY_EXPERIMENT)
 
     # COLLECT STATS
-    collect_stats(PROJECTIVITY_DIR, "projectivity.csv")
+    collect_stats(PROJECTIVITY_DIR, "projectivity.csv", 1)
 
 # SELECTIVITY -- EVAL
 def selectivity_eval():
@@ -439,7 +520,19 @@ def selectivity_eval():
     run_experiment(SELECTIVITY_EXPERIMENT)
 
     # COLLECT STATS
-    collect_stats(SELECTIVITY_DIR, "selectivity.csv")
+    collect_stats(SELECTIVITY_DIR, "selectivity.csv", 1)
+
+# OPERATOR -- EVAL
+def operator_eval():
+
+    # CLEAN UP RESULT DIR
+    clean_up_dir(OPERATOR_DIR)
+
+    # RUN EXPERIMENT
+    run_experiment(OPERATOR_EXPERIMENT)
+
+    # COLLECT STATS
+    collect_stats(OPERATOR_DIR, "operator.csv", 2)
 
 ###################################################################################
 # MAIN
@@ -454,6 +547,7 @@ if __name__ == '__main__':
 
     parser.add_argument("-a", "--projectivity_plot", help='plot projectivity', action='store_true')
     parser.add_argument("-b", "--selectivity_plot", help='plot selectivity', action='store_true')
+    parser.add_argument("-c", "--operator_plot", help='plot operator', action='store_true')
 
     args = parser.parse_args()
 
@@ -468,6 +562,12 @@ if __name__ == '__main__':
 
     if args.selectivity_plot:
        selectivity_plot();
+
+    if args.operator:
+        operator_eval()
+
+    if args.operator_plot:
+       operator_plot();
 
     #create_legend()
 
