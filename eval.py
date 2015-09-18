@@ -111,19 +111,19 @@ HYADAPT = PELOTON_BUILD_DIR + "/src/hyadapt"
 OUTPUT_FILE = "outputfile.summary"
 
 PROJECTIVITY_DIR = BASE_DIR + "/results/projectivity/"
+SELECTIVITY_DIR = BASE_DIR + "/results/selectivity/"
 
 LAYOUTS = ("row", "column", "hybrid")
 OPERATORS = ("direct", "aggregate", "arithmetic")
 
-SELECTIVITY = (0.2, 0.4, 0.6, 0.8, 1.0)
+SELECTIVITY = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
 PROJECTIVITY = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
 
-SCALE_FACTOR = 1000.0
+SCALE_FACTOR = 10.0
 TRANSACTION_COUNT = 3
 
 PROJECTIVITY_EXPERIMENT = 1
-
-LOG_NAME = "tile_group.log"
+SELECTIVITY_EXPERIMENT = 1
 
 ###################################################################################
 # UTILS
@@ -257,6 +257,57 @@ def create_projectivity_line_chart(datasets):
 
     return (fig)
 
+def create_selectivity_line_chart(datasets):
+    fig = plot.figure()
+    ax1 = fig.add_subplot(111)
+
+    # X-AXIS
+    x_values = SELECTIVITY
+    N = len(x_values)
+    x_labels = x_values
+
+    num_items = len(LAYOUTS);
+    ind = np.arange(N)
+    idx = 0
+
+    YLIMIT = 100
+
+    # GROUP
+    for group_index, group in enumerate(LAYOUTS):
+        group_data = []
+
+        # LINE
+        for line_index, line in enumerate(x_values):
+            group_data.append(datasets[group_index][line_index][1])
+
+        LOG.info("%s group_data = %s ", group, str(group_data))
+
+        ax1.plot(x_values, group_data, color=OPT_LINE_COLORS[idx], linewidth=OPT_LINE_WIDTH,
+                 marker=OPT_MARKERS[idx], markersize=OPT_MARKER_SIZE, label=str(group))
+
+        idx = idx + 1
+
+    # GRID
+    axes = ax1.get_axes()
+    makeGrid(ax1)
+
+    # Y-AXIS
+    ax1.yaxis.set_major_locator(MaxNLocator(5))
+    ax1.minorticks_off()
+    ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
+    #ax1.set_ylim([0, YLIMIT])
+
+    # X-AXIS
+    ax1.set_xlabel("Fraction of Tuples Selected", fontproperties=LABEL_FP)
+    ax1.set_xlim([0.0, 1.1])
+
+    for label in ax1.get_yticklabels() :
+        label.set_fontproperties(TICK_FP)
+    for label in ax1.get_xticklabels() :
+        label.set_fontproperties(TICK_FP)
+
+    return (fig)
+
 ###################################################################################
 # PLOT HELPERS
 ###################################################################################
@@ -277,6 +328,24 @@ def projectivity_plot():
         fig = create_projectivity_line_chart(datasets)
 
         fileName = "projectivity-%s.pdf" % (operator)
+        saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/1.5)
+
+# SELECTIVITY -- PLOT
+def selectivity_plot():
+
+    for operator in OPERATORS:
+        print(operator)
+        datasets = []
+
+        for layout in LAYOUTS:
+            data_file = SELECTIVITY_DIR + "/" + layout + "/" + operator + "/" + "selectivity.csv"
+
+            dataset = loadDataFile(10, 2, data_file)
+            datasets.append(dataset)
+
+        fig = create_selectivity_line_chart(datasets)
+
+        fileName = "selectivity-%s.pdf" % (operator)
         saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/1.5)
 
 ###################################################################################
@@ -300,7 +369,7 @@ def run_experiment(experiment_type):
                      "-e", str(experiment_type),
                      "-k", str(SCALE_FACTOR),
                      "-t", str(TRANSACTION_COUNT)])
-        
+
 
 # COLLECT STATS
 def collect_stats(result_dir,
@@ -319,7 +388,7 @@ def collect_stats(result_dir,
         selectivity = data[2]
         projectivity = data[3]
         stat = data[4]
-                
+
         if(layout == "0"):
             layout = "row"
         elif(layout == "1"):
@@ -333,13 +402,13 @@ def collect_stats(result_dir,
             operator = "aggregate"
         elif(operator == "3"):
             operator = "arithmetic"
-    
+
         result_directory = result_dir + "/" + layout + "/" + operator
-                 
+
         if not os.path.exists(result_directory):
             os.makedirs(result_directory)
         file_name = result_directory + "/" + result_file_name
-                
+
         result_file = open(file_name, "a")
         result_file.write(str(projectivity) + " , " + str(stat) + "\n")
         result_file.close()
@@ -351,10 +420,6 @@ def collect_stats(result_dir,
 # PROJECTIVITY -- EVAL
 def projectivity_eval():
 
-    # LOG RESULTS
-    log_file = open(LOG_NAME, 'w')
-    log_file.write('Start :: %s \n' % datetime.datetime.now())
-
     # CLEAN UP RESULT DIR
     clean_up_dir(PROJECTIVITY_DIR)
 
@@ -362,12 +427,19 @@ def projectivity_eval():
     run_experiment(PROJECTIVITY_EXPERIMENT)
 
     # COLLECT STATS
-    collect_stats(PROJECTIVITY_DIR, "projectivity.csv")    
+    collect_stats(PROJECTIVITY_DIR, "projectivity.csv")
 
-    # FINISH LOG
-    log_file.write('End :: %s \n' % datetime.datetime.now())
-    log_file.close()
-    log_file = open(LOG_NAME, "r")
+# SELECTIVITY -- EVAL
+def selectivity_eval():
+
+    # CLEAN UP RESULT DIR
+    clean_up_dir(SELECTIVITY_DIR)
+
+    # RUN EXPERIMENT
+    run_experiment(SELECTIVITY_EXPERIMENT)
+
+    # COLLECT STATS
+    collect_stats(SELECTIVITY_DIR, "selectivity.csv")
 
 ###################################################################################
 # MAIN
@@ -381,6 +453,7 @@ if __name__ == '__main__':
     parser.add_argument("-o", "--operator", help='eval operator', action='store_true')
 
     parser.add_argument("-a", "--projectivity_plot", help='plot projectivity', action='store_true')
+    parser.add_argument("-b", "--selectivity_plot", help='plot selectivity', action='store_true')
 
     args = parser.parse_args()
 
@@ -389,6 +462,12 @@ if __name__ == '__main__':
 
     if args.projectivity_plot:
        projectivity_plot();
+
+    if args.selectivity:
+        selectivity_eval()
+
+    if args.selectivity_plot:
+       selectivity_plot();
 
     #create_legend()
 
