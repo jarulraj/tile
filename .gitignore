@@ -54,5 +54,5 @@ zfile
 *.pdf
 /Debug
 misc/linux-examples/*
-results/
+#results/
 outputfile*
