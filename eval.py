@@ -75,8 +75,8 @@ OPT_PATTERNS = ([ "////", "////", "o", "o", "\\\\" , "\\\\" , "//////", "//////"
 
 OPT_LABEL_WEIGHT = 'bold'
 OPT_LINE_COLORS = ('#fdc086', '#b3e2cd', '#fc8d62', '#a6cee3', '#e41a1c')
-OPT_LINE_WIDTH = 6.0
-OPT_MARKER_SIZE = 10.0
+OPT_LINE_WIDTH = 4.0
+OPT_MARKER_SIZE = 6.0
 DATA_LABELS = []
 
 OPT_STACK_COLORS = ('#AFAFAF', '#F15854', '#5DA5DA', '#60BD68',  '#B276B2', '#DECF3F', '#F17CB0', '#B2912F', '#FAA43A')
@@ -116,9 +116,7 @@ LAYOUTS = ("row", "column", "hybrid")
 OPERATORS = ("direct", "aggregate", "arithmetic")
 
 SELECTIVITY = (0.2, 0.4, 0.6, 0.8, 1.0)
-
-#PROJECTIVITY = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
-PROJECTIVITY = (0.1, 0.3, 0.5, 0.7, 0.9)
+PROJECTIVITY = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
 
 SCALE_FACTOR = 1000.0
 TRANSACTION_COUNT = 3
@@ -245,12 +243,12 @@ def create_projectivity_line_chart(datasets):
     # Y-AXIS
     ax1.yaxis.set_major_locator(MaxNLocator(5))
     ax1.minorticks_off()
-    ax1.set_ylabel("Execution time (sec)", fontproperties=LABEL_FP)
+    ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
     #ax1.set_ylim([0, YLIMIT])
 
     # X-AXIS
     ax1.set_xlabel("Fraction of Attributes Projected", fontproperties=LABEL_FP)
-    ax1.set_xlim([0.0, 1.0])
+    ax1.set_xlim([0.0, 1.1])
 
     for label in ax1.get_yticklabels() :
         label.set_fontproperties(TICK_FP)
