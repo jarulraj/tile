@@ -120,7 +120,7 @@ OPERATORS = ("direct", "aggregate", "arithmetic")
 SELECTIVITY = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
 PROJECTIVITY = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
 
-OP_SELECTIVITY = (0.01, 0.5, 1.0)
+OP_SELECTIVITY = (0.01, 0.1, 1.0)
 
 SCALE_FACTOR = 200.0
 TRANSACTION_COUNT = 5
