@@ -118,7 +118,7 @@ LAYOUTS = ("row", "column", "hybrid")
 OPERATORS = ("direct", "aggregate", "arithmetic")
 
 SELECTIVITY = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
-PROJECTIVITY = (0.2, 0.4, 0.6, 0.8, 1.0)
+PROJECTIVITY = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
 
 OP_SELECTIVITY = (0.01, 0.5, 1.0)
 
@@ -248,6 +248,7 @@ def create_projectivity_line_chart(datasets):
     ax1.yaxis.set_major_locator(MaxNLocator(5))
     ax1.minorticks_off()
     ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
+    #ax1.set_yscale('log', basey=10)
     #ax1.set_ylim([0, YLIMIT])
 
     # X-AXIS
