@@ -117,13 +117,17 @@ OPERATOR_DIR = BASE_DIR + "/results/operator/"
 LAYOUTS = ("row", "column", "hybrid")
 OPERATORS = ("direct", "aggregate", "arithmetic")
 
-SELECTIVITY = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
-PROJECTIVITY = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
+SCALE_FACTOR = 100.0
+
+SELECTIVITY = (0.2, 0.4, 0.6, 0.8, 1.0)
+PROJECTIVITY = (0.2, 0.4, 0.6, 0.8, 1.0)
 
 OP_SELECTIVITY = (0.01, 0.1, 1.0)
 
-SCALE_FACTOR = 200.0
-TRANSACTION_COUNT = 5
+COLUMN_COUNTS = (50, 150)
+WRITE_RATIOS = (0, 0.5)
+
+TRANSACTION_COUNT = 3
 
 PROJECTIVITY_EXPERIMENT = 1
 SELECTIVITY_EXPERIMENT = 2
@@ -371,57 +375,69 @@ def create_operator_line_chart(datasets):
 # PROJECTIVITY -- PLOT
 def projectivity_plot():
 
-    for operator in OPERATORS:
-        print(operator)
-        datasets = []
+    for column_count in COLUMN_COUNTS:
 
-        for layout in LAYOUTS:
-            data_file = PROJECTIVITY_DIR + "/" + layout + "/" + operator + "/" + "projectivity.csv"
+        for write_ratio in WRITE_RATIOS:
 
-            dataset = loadDataFile(10, 2, data_file)
-            datasets.append(dataset)
+            for operator in OPERATORS:
+                print(operator)
+                datasets = []
 
-        fig = create_projectivity_line_chart(datasets)
+                for layout in LAYOUTS:
+                    data_file = PROJECTIVITY_DIR + "/" + layout + "/" + operator + "/" + str(column_count) + "/" + str(write_ratio) + "/" + "projectivity.csv"
 
-        fileName = "projectivity-%s.pdf" % (operator)
-        saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/1.5)
+                    dataset = loadDataFile(10, 2, data_file)
+                    datasets.append(dataset)
+
+                fig = create_projectivity_line_chart(datasets)
+
+                fileName = "projectivity-%s-%s-%s.pdf" % (operator, column_count, write_ratio)
+                saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/1.5)
 
 # SELECTIVITY -- PLOT
 def selectivity_plot():
 
-    for operator in OPERATORS:
-        print(operator)
-        datasets = []
+    for column_count in COLUMN_COUNTS:
 
-        for layout in LAYOUTS:
-            data_file = SELECTIVITY_DIR + "/" + layout + "/" + operator + "/" + "selectivity.csv"
+        for write_ratio in WRITE_RATIOS:
 
-            dataset = loadDataFile(10, 2, data_file)
-            datasets.append(dataset)
+            for operator in OPERATORS:
+                print(operator)
+                datasets = []
 
-        fig = create_selectivity_line_chart(datasets)
+                for layout in LAYOUTS:
+                    data_file = SELECTIVITY_DIR + "/" + layout + "/" + operator  + "/" + str(column_count) + "/" + str(write_ratio) + "/" + "selectivity.csv"
 
-        fileName = "selectivity-%s.pdf" % (operator)
-        saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/1.5)
+                    dataset = loadDataFile(10, 2, data_file)
+                    datasets.append(dataset)
+
+                fig = create_selectivity_line_chart(datasets)
+
+                fileName = "selectivity-%s-%s-%s.pdf" % (operator, column_count, write_ratio)
+                saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/1.5)
 
 # OPERATOR -- PLOT
 def operator_plot():
 
-    for selectivity in OP_SELECTIVITY:
-        print(selectivity)
-        datasets = []
+    for column_count in COLUMN_COUNTS:
 
-        for layout in LAYOUTS:
-            if selectivity == 1.0: selectivity = 1
-            data_file = OPERATOR_DIR + "/" + layout + "/" + str(selectivity) + "/" + "operator.csv"
+        for write_ratio in WRITE_RATIOS:
 
-            dataset = loadDataFile(10, 2, data_file)
-            datasets.append(dataset)
+            for selectivity in OP_SELECTIVITY:
+                print(selectivity)
+                datasets = []
 
-        fig = create_operator_line_chart(datasets)
+                for layout in LAYOUTS:
+                    if selectivity == 1.0: selectivity = 1
+                    data_file = OPERATOR_DIR + "/" + layout + "/" + str(selectivity) + "/" + str(column_count) + "/" + str(write_ratio) + "/" + "operator.csv"
 
-        fileName = "operator-%s.pdf" % (str(selectivity))
-        saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/1.5)
+                    dataset = loadDataFile(10, 2, data_file)
+                    datasets.append(dataset)
+
+                fig = create_operator_line_chart(datasets)
+
+                fileName = "operator-%s-%s-%s.pdf" % (str(selectivity), column_count, write_ratio)
+                saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/1.5)
 
 
 ###################################################################################
@@ -464,7 +480,9 @@ def collect_stats(result_dir,
         operator = data[1]
         selectivity = data[2]
         projectivity = data[3]
-        stat = data[4]
+        column_count = data[4]
+        write_ratio = data[5]
+        stat = data[6]
 
         if(layout == "0"):
             layout = "row"
@@ -482,10 +500,10 @@ def collect_stats(result_dir,
 
         # OPERATOR CATEGORY
         if category == 1:
-            result_directory = result_dir + "/" + layout + "/" + operator
+            result_directory = result_dir + "/" + layout + "/" + operator + "/" + column_count + "/" + write_ratio
         # SELECTIVITY CATEGORY
         elif category == 2:
-            result_directory = result_dir + "/" + layout + "/" + str(selectivity)
+            result_directory = result_dir + "/" + layout + "/" + str(selectivity) + "/" + column_count + "/" + write_ratio
 
         if not os.path.exists(result_directory):
             os.makedirs(result_directory)
