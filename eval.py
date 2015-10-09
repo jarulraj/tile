@@ -75,8 +75,8 @@ OPT_PATTERNS = ([ "////", "////", "o", "o", "\\\\" , "\\\\" , "//////", "//////"
 
 OPT_LABEL_WEIGHT = 'bold'
 OPT_LINE_COLORS = ('#fdc086', '#b3e2cd', '#fc8d62', '#a6cee3', '#e41a1c')
-OPT_LINE_WIDTH = 4.0
-OPT_MARKER_SIZE = 6.0
+OPT_LINE_WIDTH = 5.0
+OPT_MARKER_SIZE = 8.0
 DATA_LABELS = []
 
 OPT_STACK_COLORS = ('#AFAFAF', '#F15854', '#5DA5DA', '#60BD68',  '#B276B2', '#DECF3F', '#F17CB0', '#B2912F', '#FAA43A')
@@ -98,6 +98,8 @@ matplotlib.rcParams['text.usetex'] = True
 LABEL_FP = FontProperties(family=OPT_FONT_NAME, style='normal', size=LABEL_FONT_SIZE, weight='bold')
 TICK_FP = FontProperties(family=OPT_FONT_NAME, style='normal', size=TICK_FONT_SIZE)
 TINY_FP = FontProperties(family=OPT_FONT_NAME, style='normal', size=TINY_FONT_SIZE)
+
+YAXIS_TICKS = 4
 
 ###################################################################################
 # CONFIGURATION
@@ -249,7 +251,7 @@ def create_projectivity_line_chart(datasets):
     makeGrid(ax1)
 
     # Y-AXIS
-    ax1.yaxis.set_major_locator(MaxNLocator(5))
+    ax1.yaxis.set_major_locator(MaxNLocator(YAXIS_TICKS))
     ax1.minorticks_off()
     ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
     #ax1.set_yscale('log', basey=10)
@@ -301,7 +303,7 @@ def create_selectivity_line_chart(datasets):
     makeGrid(ax1)
 
     # Y-AXIS
-    ax1.yaxis.set_major_locator(MaxNLocator(5))
+    ax1.yaxis.set_major_locator(MaxNLocator(YAXIS_TICKS))
     ax1.minorticks_off()
     ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
     #ax1.set_ylim([0, YLIMIT])
@@ -352,7 +354,7 @@ def create_operator_line_chart(datasets):
     makeGrid(ax1)
 
     # Y-AXIS
-    ax1.yaxis.set_major_locator(MaxNLocator(5))
+    ax1.yaxis.set_major_locator(MaxNLocator(YAXIS_TICKS))
     ax1.minorticks_off()
     ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
     #ax1.set_ylim([0, YLIMIT])
@@ -397,7 +399,7 @@ def projectivity_plot():
                     fileName = "projectivity-%s-%s-rd.pdf" % (operator, str(column_count_type))
                 else:
                     fileName = "projectivity-%s-%s-rw.pdf" % (operator, str(column_count_type))                    
-                saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/1.5)
+                saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
 
 # SELECTIVITY -- PLOT
 def selectivity_plot():
@@ -425,7 +427,7 @@ def selectivity_plot():
                 else:
                     fileName = "selectivity-%s-%s-rw.pdf" % (operator, str(column_count_type))
 
-                saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/1.5)
+                saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
 
 # OPERATOR -- PLOT
 def operator_plot():
@@ -456,7 +458,7 @@ def operator_plot():
                 else:
                     fileName = "operator-%s-%s-wr.pdf" % (selectivity_type, str(column_count_type))
 
-                saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/1.5)
+                saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
 
 
 ###################################################################################
