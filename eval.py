@@ -375,7 +375,9 @@ def create_operator_line_chart(datasets):
 # PROJECTIVITY -- PLOT
 def projectivity_plot():
 
+    column_count_type = 0
     for column_count in COLUMN_COUNTS:
+        column_count_type = column_count_type + 1
 
         for write_ratio in WRITE_RATIOS:
 
@@ -391,13 +393,18 @@ def projectivity_plot():
 
                 fig = create_projectivity_line_chart(datasets)
 
-                fileName = "projectivity-%s-%s-%s.pdf" % (operator, column_count, write_ratio)
+                if write_ratio == 0:
+                    fileName = "projectivity-%s-%s-rd.pdf" % (operator, str(column_count_type))
+                else:
+                    fileName = "projectivity-%s-%s-rw.pdf" % (operator, str(column_count_type))                    
                 saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/1.5)
 
 # SELECTIVITY -- PLOT
 def selectivity_plot():
 
+    column_count_type = 0
     for column_count in COLUMN_COUNTS:
+        column_count_type = column_count_type + 1
 
         for write_ratio in WRITE_RATIOS:
 
@@ -413,17 +420,25 @@ def selectivity_plot():
 
                 fig = create_selectivity_line_chart(datasets)
 
-                fileName = "selectivity-%s-%s-%s.pdf" % (operator, column_count, write_ratio)
+                if write_ratio == 0:
+                    fileName = "selectivity-%s-%s-rd.pdf" % (operator, str(column_count_type))
+                else:
+                    fileName = "selectivity-%s-%s-rw.pdf" % (operator, str(column_count_type))
+
                 saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/1.5)
 
 # OPERATOR -- PLOT
 def operator_plot():
 
+    column_count_type = 0
     for column_count in COLUMN_COUNTS:
+        column_count_type = column_count_type + 1
 
         for write_ratio in WRITE_RATIOS:
 
+            selectivity_type = 0
             for selectivity in OP_SELECTIVITY:
+                selectivity_type = selectivity_type + 1
                 print(selectivity)
                 datasets = []
 
@@ -436,7 +451,11 @@ def operator_plot():
 
                 fig = create_operator_line_chart(datasets)
 
-                fileName = "operator-%s-%s-%s.pdf" % (str(selectivity), column_count, write_ratio)
+                if write_ratio == 0:
+                    fileName = "operator-%s-%s-rd.pdf" % (selectivity_type, str(column_count_type))
+                else:
+                    fileName = "operator-%s-%s-wr.pdf" % (selectivity_type, str(column_count_type))
+
                 saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/1.5)
 
 
