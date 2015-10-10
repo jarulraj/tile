@@ -119,17 +119,17 @@ OPERATOR_DIR = BASE_DIR + "/results/operator/"
 LAYOUTS = ("row", "column", "hybrid")
 OPERATORS = ("direct", "aggregate", "arithmetic")
 
-SCALE_FACTOR = 100.0
+SCALE_FACTOR = 1000.0
 
-SELECTIVITY = (0.2, 0.4, 0.6, 0.8, 1.0)
-PROJECTIVITY = (0.2, 0.4, 0.6, 0.8, 1.0)
+SELECTIVITY = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
+PROJECTIVITY = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
 
 OP_SELECTIVITY = (0.1, 0.5, 1.0)
 
-COLUMN_COUNTS = (50, 250)
-WRITE_RATIOS = (0, 0.5)
+COLUMN_COUNTS = (50, 200)
+WRITE_RATIOS = (0, 0.1)
 
-TRANSACTION_COUNT = 5
+TRANSACTION_COUNT = 3
 
 PROJECTIVITY_EXPERIMENT = 1
 SELECTIVITY_EXPERIMENT = 2
@@ -398,7 +398,7 @@ def projectivity_plot():
                 if write_ratio == 0:
                     fileName = "projectivity-%s-%s-rd.pdf" % (operator, str(column_count_type))
                 else:
-                    fileName = "projectivity-%s-%s-rw.pdf" % (operator, str(column_count_type))                    
+                    fileName = "projectivity-%s-%s-rw.pdf" % (operator, str(column_count_type))
                 saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
 
 # SELECTIVITY -- PLOT
@@ -456,7 +456,7 @@ def operator_plot():
                 if write_ratio == 0:
                     fileName = "operator-%s-%s-rd.pdf" % (selectivity_type, str(column_count_type))
                 else:
-                    fileName = "operator-%s-%s-wr.pdf" % (selectivity_type, str(column_count_type))
+                    fileName = "operator-%s-%s-rw.pdf" % (selectivity_type, str(column_count_type))
 
                 saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
 
