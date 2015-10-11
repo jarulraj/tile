@@ -120,7 +120,7 @@ OPERATOR_DIR = BASE_DIR + "/results/operator/"
 LAYOUTS = ("row", "column", "hybrid")
 OPERATORS = ("direct", "aggregate", "arithmetic")
 
-SCALE_FACTOR = 1000.0
+SCALE_FACTOR = 1.0
 
 SELECTIVITY = (0.2, 0.4, 0.6, 0.8, 1.0)
 PROJECTIVITY = (0.2, 0.4, 0.6, 0.8, 1.0)
