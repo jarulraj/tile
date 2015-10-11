@@ -343,8 +343,10 @@ def create_operator_line_chart(datasets):
 
     YLIMIT = 0
 
+    layouts = LAYOUTS[:-1]
+     
     # GROUP
-    for group_index, group in enumerate(LAYOUTS):
+    for group_index, group in enumerate(layouts):
         group_data = []
 
         # LINE
