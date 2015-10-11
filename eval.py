@@ -75,8 +75,8 @@ OPT_PATTERNS = ([ "////", "////", "o", "o", "\\\\" , "\\\\" , "//////", "//////"
 
 OPT_LABEL_WEIGHT = 'bold'
 OPT_LINE_COLORS = ('#fdc086', '#b3e2cd', '#fc8d62', '#a6cee3', '#e41a1c')
-OPT_LINE_WIDTH = 5.0
-OPT_MARKER_SIZE = 8.0
+OPT_LINE_WIDTH = 6.0
+OPT_MARKER_SIZE = 10.0
 DATA_LABELS = []
 
 OPT_STACK_COLORS = ('#AFAFAF', '#F15854', '#5DA5DA', '#60BD68',  '#B276B2', '#DECF3F', '#F17CB0', '#B2912F', '#FAA43A')
@@ -99,7 +99,8 @@ LABEL_FP = FontProperties(family=OPT_FONT_NAME, style='normal', size=LABEL_FONT_
 TICK_FP = FontProperties(family=OPT_FONT_NAME, style='normal', size=TICK_FONT_SIZE)
 TINY_FP = FontProperties(family=OPT_FONT_NAME, style='normal', size=TINY_FONT_SIZE)
 
-YAXIS_TICKS = 4
+YAXIS_TICKS = 5
+YAXIS_ROUND = 1000.0
 
 ###################################################################################
 # CONFIGURATION
@@ -124,7 +125,7 @@ SCALE_FACTOR = 1000.0
 SELECTIVITY = (0.2, 0.4, 0.6, 0.8, 1.0)
 PROJECTIVITY = (0.2, 0.4, 0.6, 0.8, 1.0)
 
-OP_SELECTIVITY = (0.1, 1.0)
+OP_PROJECTIVITY = (0.1, 1.0)
 
 COLUMN_COUNTS = (50, 200)
 WRITE_RATIOS = (0, 0.5)
@@ -160,6 +161,12 @@ def loadDataFile(n_rows, n_cols, path):
         row_num += 1
 
     return data
+
+def next_power_of_10(n):
+    return (10 ** math.ceil(math.log(n, 10)))
+
+def get_upper_bound(n):
+    return (math.ceil(n / YAXIS_ROUND) * YAXIS_ROUND)
 
 # # MAKE GRID
 def makeGrid(ax):
@@ -254,12 +261,14 @@ def create_projectivity_line_chart(datasets):
     ax1.yaxis.set_major_locator(MaxNLocator(YAXIS_TICKS))
     ax1.minorticks_off()
     ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
-    #ax1.set_yscale('log', basey=10)
-    #ax1.set_ylim([0, YLIMIT])
+    ax1.set_yscale('log', basey=2)
+    #ax1.set_ylim([YAXIS_MIN, YAXIS_MAX])
 
     # X-AXIS
+    XAXIS_MIN = 0.1
+    XAXIS_MAX = 1.1
     ax1.set_xlabel("Fraction of Attributes Projected", fontproperties=LABEL_FP)
-    ax1.set_xlim([0.0, 1.1])
+    ax1.set_xlim([XAXIS_MIN, XAXIS_MAX])
 
     for label in ax1.get_yticklabels() :
         label.set_fontproperties(TICK_FP)
@@ -281,8 +290,6 @@ def create_selectivity_line_chart(datasets):
     ind = np.arange(N)
     idx = 0
 
-    YLIMIT = 100
-
     # GROUP
     for group_index, group in enumerate(LAYOUTS):
         group_data = []
@@ -306,11 +313,13 @@ def create_selectivity_line_chart(datasets):
     ax1.yaxis.set_major_locator(MaxNLocator(YAXIS_TICKS))
     ax1.minorticks_off()
     ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
-    #ax1.set_ylim([0, YLIMIT])
+    ax1.set_yscale('log', basey=2)
 
     # X-AXIS
+    XAXIS_MIN = 0.1
+    XAXIS_MAX = 1.1
     ax1.set_xlabel("Fraction of Tuples Selected", fontproperties=LABEL_FP)
-    ax1.set_xlim([0.0, 1.1])
+    ax1.set_xlim([XAXIS_MIN, XAXIS_MAX])
 
     for label in ax1.get_yticklabels() :
         label.set_fontproperties(TICK_FP)
@@ -332,7 +341,7 @@ def create_operator_line_chart(datasets):
     ind = np.arange(N)
     idx = 0
 
-    YLIMIT = 100
+    YLIMIT = 0
 
     # GROUP
     for group_index, group in enumerate(LAYOUTS):
@@ -348,20 +357,26 @@ def create_operator_line_chart(datasets):
                  marker=OPT_MARKERS[idx], markersize=OPT_MARKER_SIZE, label=str(group))
 
         idx = idx + 1
+        
+        YLIMIT = max(YLIMIT, max(group_data))
 
     # GRID
     axes = ax1.get_axes()
     makeGrid(ax1)
 
+    YLIMIT = next_power_of_10(YLIMIT)    
+    
     # Y-AXIS
     ax1.yaxis.set_major_locator(MaxNLocator(YAXIS_TICKS))
     ax1.minorticks_off()
     ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
-    #ax1.set_ylim([0, YLIMIT])
+    ax1.set_yscale('log', basey=2)
 
     # X-AXIS
+    XAXIS_MIN = 0.1
+    XAXIS_MAX = 1.1    
     ax1.set_xlabel("Fraction of Attributes Selected", fontproperties=LABEL_FP)
-    ax1.set_xlim([0.0, 1.1])
+    ax1.set_xlim([XAXIS_MIN, XAXIS_MAX])
 
     for label in ax1.get_yticklabels() :
         label.set_fontproperties(TICK_FP)
@@ -396,9 +411,17 @@ def projectivity_plot():
                 fig = create_projectivity_line_chart(datasets)
 
                 if write_ratio == 0:
-                    fileName = "projectivity-%s-%s-rd.pdf" % (operator, str(column_count_type))
+                    write_mix = "rd"
                 else:
-                    fileName = "projectivity-%s-%s-rw.pdf" % (operator, str(column_count_type))
+                    write_mix = "rw"
+                                    
+                if column_count_type == 1:
+                    table_type = "narrow"
+                else:
+                    table_type = "wide"                        
+                        
+                fileName = "projectivity-" + operator + "-" + table_type + "-" + write_mix + ".pdf"
+                 
                 saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
 
 # SELECTIVITY -- PLOT
@@ -423,9 +446,16 @@ def selectivity_plot():
                 fig = create_selectivity_line_chart(datasets)
 
                 if write_ratio == 0:
-                    fileName = "selectivity-%s-%s-rd.pdf" % (operator, str(column_count_type))
+                    write_mix = "rd"
                 else:
-                    fileName = "selectivity-%s-%s-rw.pdf" % (operator, str(column_count_type))
+                    write_mix = "rw"
+                                    
+                if column_count_type == 1:
+                    table_type = "narrow"
+                else:
+                    table_type = "wide"                        
+                        
+                fileName = "selectivity-" + operator + "-" + table_type + "-" + write_mix + ".pdf"
 
                 saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
 
@@ -438,15 +468,15 @@ def operator_plot():
 
         for write_ratio in WRITE_RATIOS:
 
-            selectivity_type = 0
-            for selectivity in OP_SELECTIVITY:
-                selectivity_type = selectivity_type + 1
-                print(selectivity)
+            projectivity_type = 0
+            for projectivity in OP_PROJECTIVITY:
+                projectivity_type = projectivity_type + 1
+                print(projectivity)
                 datasets = []
 
                 for layout in LAYOUTS:
-                    if selectivity == 1.0: selectivity = 1
-                    data_file = OPERATOR_DIR + "/" + layout + "/" + str(selectivity) + "/" + str(column_count) + "/" + str(write_ratio) + "/" + "operator.csv"
+                    if projectivity == 1.0: projectivity = 1
+                    data_file = OPERATOR_DIR + "/" + layout + "/" + str(projectivity) + "/" + str(column_count) + "/" + str(write_ratio) + "/" + "operator.csv"
 
                     dataset = loadDataFile(10, 2, data_file)
                     datasets.append(dataset)
@@ -454,9 +484,16 @@ def operator_plot():
                 fig = create_operator_line_chart(datasets)
 
                 if write_ratio == 0:
-                    fileName = "operator-%s-%s-rd.pdf" % (selectivity_type, str(column_count_type))
+                    write_mix = "rd"
                 else:
-                    fileName = "operator-%s-%s-rw.pdf" % (selectivity_type, str(column_count_type))
+                    write_mix = "rw"
+                                    
+                if column_count_type == 1:
+                    table_type = "narrow"
+                else:
+                    table_type = "wide"                        
+                        
+                fileName = "operator-" + str(projectivity_type) + "-" + table_type + "-" + write_mix + ".pdf"
 
                 saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
 
@@ -519,19 +556,26 @@ def collect_stats(result_dir,
         elif(operator == "3"):
             operator = "arithmetic"
 
-        # OPERATOR CATEGORY
-        if category == 1:
+        # PROJECTIVITY/SELECTIVITY CATEGORY
+        if category == 1 or category == 2:
             result_directory = result_dir + "/" + layout + "/" + operator + "/" + column_count + "/" + write_ratio
-        # SELECTIVITY CATEGORY
-        elif category == 2:
-            result_directory = result_dir + "/" + layout + "/" + str(selectivity) + "/" + column_count + "/" + write_ratio
+        # OPERATOR CATEGORY
+        elif category == 3:
+            result_directory = result_dir + "/" + layout + "/" + str(projectivity) + "/" + column_count + "/" + write_ratio
 
         if not os.path.exists(result_directory):
             os.makedirs(result_directory)
         file_name = result_directory + "/" + result_file_name
 
         result_file = open(file_name, "a")
-        result_file.write(str(projectivity) + " , " + str(stat) + "\n")
+
+        # PROJECTIVITY/SELECTIVITY CATEGORY
+        if category == 1:
+            result_file.write(str(projectivity) + " , " + str(stat) + "\n")
+        # OPERATOR CATEGORY
+        elif category == 2 or category == 3:
+            result_file.write(str(selectivity) + " , " + str(stat) + "\n")
+            
         result_file.close()
 
 ###################################################################################
@@ -560,7 +604,7 @@ def selectivity_eval():
     run_experiment(SELECTIVITY_EXPERIMENT)
 
     # COLLECT STATS
-    collect_stats(SELECTIVITY_DIR, "selectivity.csv", 1)
+    collect_stats(SELECTIVITY_DIR, "selectivity.csv", 2)
 
 # OPERATOR -- EVAL
 def operator_eval():
@@ -572,7 +616,7 @@ def operator_eval():
     run_experiment(OPERATOR_EXPERIMENT)
 
     # COLLECT STATS
-    collect_stats(OPERATOR_DIR, "operator.csv", 2)
+    collect_stats(OPERATOR_DIR, "operator.csv", 3)
 
 ###################################################################################
 # MAIN
@@ -595,19 +639,19 @@ if __name__ == '__main__':
         projectivity_eval()
 
     if args.projectivity_plot:
-       projectivity_plot();
+        projectivity_plot();
 
     if args.selectivity:
         selectivity_eval()
 
     if args.selectivity_plot:
-       selectivity_plot();
+        selectivity_plot();
 
     if args.operator:
         operator_eval()
 
     if args.operator_plot:
-       operator_plot();
+        operator_plot();
 
     #create_legend()
 
