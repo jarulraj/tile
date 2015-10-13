@@ -29,6 +29,7 @@ import matplotlib.pyplot as plot
 from matplotlib.font_manager import FontProperties
 from matplotlib.ticker import MaxNLocator
 from matplotlib.ticker import LogLocator
+from matplotlib.ticker import LinearLocator    
 from pprint import pprint, pformat
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib import rc
@@ -65,7 +66,7 @@ OPT_GRAPH_HEIGHT = 300
 OPT_GRAPH_WIDTH = 400
 
 #COLOR_MAP = ('#F15854', '#9C9F84', '#F7DCB4', '#991809', '#5C755E', '#A97D5D')
-COLOR_MAP = ( '#F58A87', '#80CA86', '#9EC9E9', "#F15854", "#66A26B", "#5DA5DA")
+COLOR_MAP = ( '#556270', '#4ECDC4', '#C44D58', "#C7F464", "#FF6B6B", "#424254")
 OPT_COLORS = COLOR_MAP
 
 OPT_GRID_COLOR = 'gray'
@@ -74,9 +75,9 @@ OPT_MARKERS = (['o', 's', 'v', "^", "h", "v", ">", "x", "d", "<", "|", "", "|", 
 OPT_PATTERNS = ([ "////", "////", "o", "o", "\\\\" , "\\\\" , "//////", "//////", ".", "." , "\\\\\\" , "\\\\\\" ])
 
 OPT_LABEL_WEIGHT = 'bold'
-OPT_LINE_COLORS = ('#fdc086', '#b3e2cd', '#fc8d62', '#a6cee3', '#e41a1c')
-OPT_LINE_WIDTH = 6.0
-OPT_MARKER_SIZE = 10.0
+OPT_LINE_COLORS = ('#9EC8E9', '#BADE6A', '#F58A87', '#FFE9A7', '#424254')
+OPT_LINE_WIDTH = 5.0
+OPT_MARKER_SIZE = 8.0
 DATA_LABELS = []
 
 OPT_STACK_COLORS = ('#AFAFAF', '#F15854', '#5DA5DA', '#60BD68',  '#B276B2', '#DECF3F', '#F17CB0', '#B2912F', '#FAA43A')
@@ -258,10 +259,10 @@ def create_projectivity_line_chart(datasets):
     makeGrid(ax1)
 
     # Y-AXIS
-    ax1.yaxis.set_major_locator(MaxNLocator(YAXIS_TICKS))
+    ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
     ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
-    ax1.set_yscale('log', basey=2)
+    #ax1.set_yscale('log', basey=2)
     #ax1.set_ylim([YAXIS_MIN, YAXIS_MAX])
 
     # X-AXIS
@@ -310,10 +311,10 @@ def create_selectivity_line_chart(datasets):
     makeGrid(ax1)
 
     # Y-AXIS
-    ax1.yaxis.set_major_locator(MaxNLocator(YAXIS_TICKS))
+    ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
     ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
-    ax1.set_yscale('log', basey=2)
+    #ax1.set_yscale('log', basey=2)
 
     # X-AXIS
     XAXIS_MIN = 0.1
@@ -369,10 +370,10 @@ def create_operator_line_chart(datasets):
     YLIMIT = next_power_of_10(YLIMIT)    
     
     # Y-AXIS
-    ax1.yaxis.set_major_locator(MaxNLocator(YAXIS_TICKS))
+    ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
     ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
-    ax1.set_yscale('log', basey=2)
+    #ax1.set_yscale('log', basey=2)
 
     # X-AXIS
     XAXIS_MIN = 0.1
