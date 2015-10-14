@@ -65,8 +65,7 @@ OPT_FONT_NAME = 'Helvetica'
 OPT_GRAPH_HEIGHT = 300
 OPT_GRAPH_WIDTH = 400
 
-#COLOR_MAP = ('#F15854', '#9C9F84', '#F7DCB4', '#991809', '#5C755E', '#A97D5D')
-COLOR_MAP = ( '#556270', '#4ECDC4', '#C44D58', "#C7F464", "#FF6B6B", "#424254")
+COLOR_MAP = ('#F15854', '#9C9F84', '#F7DCB4', '#991809', '#5C755E', '#A97D5D')
 OPT_COLORS = COLOR_MAP
 
 OPT_GRID_COLOR = 'gray'
@@ -75,7 +74,7 @@ OPT_MARKERS = (['o', 's', 'v', "^", "h", "v", ">", "x", "d", "<", "|", "", "|", 
 OPT_PATTERNS = ([ "////", "////", "o", "o", "\\\\" , "\\\\" , "//////", "//////", ".", "." , "\\\\\\" , "\\\\\\" ])
 
 OPT_LABEL_WEIGHT = 'bold'
-OPT_LINE_COLORS = ('#9EC8E9', '#BADE6A', '#F58A87', '#FFE9A7', '#424254')
+OPT_LINE_COLORS = ('#FDC086', '#B3E2Cd', '#FC8D62', '#A6CEE3', '#F58A87')
 OPT_LINE_WIDTH = 5.0
 OPT_MARKER_SIZE = 8.0
 DATA_LABELS = []
@@ -87,6 +86,7 @@ OPT_STACK_COLORS = ('#AFAFAF', '#F15854', '#5DA5DA', '#60BD68',  '#B276B2', '#DE
 LABEL_FONT_SIZE = 16
 TICK_FONT_SIZE = 14
 TINY_FONT_SIZE = 8
+LEGEND_FONT_SIZE = 20
 
 AXIS_LINEWIDTH = 1.3
 BAR_LINEWIDTH = 1.2
@@ -99,6 +99,7 @@ matplotlib.rcParams['text.usetex'] = True
 LABEL_FP = FontProperties(family=OPT_FONT_NAME, style='normal', size=LABEL_FONT_SIZE, weight='bold')
 TICK_FP = FontProperties(family=OPT_FONT_NAME, style='normal', size=TICK_FONT_SIZE)
 TINY_FP = FontProperties(family=OPT_FONT_NAME, style='normal', size=TINY_FONT_SIZE)
+LEGEND_FP = FontProperties(family=OPT_FONT_NAME, style='normal', size=LEGEND_FONT_SIZE, weight='bold')
 
 YAXIS_TICKS = 5
 YAXIS_ROUND = 1000.0
@@ -119,12 +120,12 @@ SELECTIVITY_DIR = BASE_DIR + "/results/selectivity/"
 OPERATOR_DIR = BASE_DIR + "/results/operator/"
 
 LAYOUTS = ("row", "column", "hybrid")
-OPERATORS = ("direct", "aggregate", "arithmetic")
+OPERATORS = ("direct", "aggregate")
 
 SCALE_FACTOR = 1000.0
 
 SELECTIVITY = (0.2, 0.4, 0.6, 0.8, 1.0)
-PROJECTIVITY = (0.2, 0.4, 0.6, 0.8, 1.0)
+PROJECTIVITY = (0.1, 0.2, 0.3, 0.4, 0.5)
 
 OP_PROJECTIVITY = (0.1, 1.0)
 
@@ -202,7 +203,7 @@ def create_legend():
     fig = pylab.figure()
     ax1 = fig.add_subplot(111)
 
-    figlegend = pylab.figure(figsize=(6, 0.5))
+    figlegend = pylab.figure(figsize=(8, 0.5))
     idx = 0
     lines = [None] * len(LAYOUTS)
 
@@ -218,8 +219,8 @@ def create_legend():
         idx = idx + 1
 
     # LEGEND
-    figlegend.legend(lines,  layouts, prop=LABEL_FP, loc=1, ncol=4, mode="expand", shadow=OPT_LEGEND_SHADOW,
-                     frameon=False, borderaxespad=0.0, handleheight=2, handlelength=3.5)
+    figlegend.legend(lines,  layouts, prop=LEGEND_FP, loc=1, ncol=4, mode="expand", shadow=OPT_LEGEND_SHADOW,
+                     frameon=False, borderaxespad=0.0, handlelength=4)
 
     figlegend.savefig('legend.pdf')
 
@@ -343,11 +344,9 @@ def create_operator_line_chart(datasets):
     idx = 0
 
     YLIMIT = 0
-
-    layouts = LAYOUTS[:-1]
      
     # GROUP
-    for group_index, group in enumerate(layouts):
+    for group_index, group in enumerate(LAYOUTS):
         group_data = []
 
         # LINE
@@ -378,7 +377,7 @@ def create_operator_line_chart(datasets):
     # X-AXIS
     XAXIS_MIN = 0.1
     XAXIS_MAX = 1.1    
-    ax1.set_xlabel("Fraction of Attributes Selected", fontproperties=LABEL_FP)
+    ax1.set_xlabel("Fraction of Tuples Selected", fontproperties=LABEL_FP)
     ax1.set_xlim([XAXIS_MIN, XAXIS_MAX])
 
     for label in ax1.get_yticklabels() :
@@ -556,8 +555,6 @@ def collect_stats(result_dir,
             operator = "direct"
         elif(operator == "2"):
             operator = "aggregate"
-        elif(operator == "3"):
-            operator = "arithmetic"
 
         # PROJECTIVITY/SELECTIVITY CATEGORY
         if category == 1 or category == 2:
