@@ -128,11 +128,12 @@ PROJECTIVITY_DIR = BASE_DIR + "/results/projectivity/"
 SELECTIVITY_DIR = BASE_DIR + "/results/selectivity/"
 OPERATOR_DIR = BASE_DIR + "/results/operator/"
 YCSB_DIR = BASE_DIR + "/results/ycsb/"
+VERTICAL_DIR = BASE_DIR + "/results/vertical/"
 
 LAYOUTS = ("row", "column", "hybrid")
 OPERATORS = ("direct", "aggregate")
 
-SCALE_FACTOR = 2000.0
+SCALE_FACTOR = 100.0
 
 SELECTIVITY = (0.2, 0.4, 0.6, 0.8, 1.0)
 PROJECTIVITY = (0.1, 0.2, 0.3, 0.4, 0.5)
@@ -141,12 +142,15 @@ OP_PROJECTIVITY = (0.1, 1.0)
 
 COLUMN_COUNTS = (50, 200)
 WRITE_RATIOS = (0, 0.1)
+TUPLES_PER_TILEGROUP = (100, 1000, 10000)
 
 TRANSACTION_COUNT = 3
 
 PROJECTIVITY_EXPERIMENT = 1
 SELECTIVITY_EXPERIMENT = 2
 OPERATOR_EXPERIMENT = 3
+VERTICAL_EXPERIMENT= 4
+
 YCSB_EXPERIMENT = 1
 
 YCSB_SCALE_FACTOR = 100.0
@@ -560,6 +564,41 @@ def selectivity_plot():
 
                 saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
 
+
+# VERTICAL -- PLOT
+def vertical_plot():
+
+    column_count_type = 0
+    for column_count in COLUMN_COUNTS:
+        column_count_type = column_count_type + 1
+
+        for write_ratio in WRITE_RATIOS:
+            datasets = []
+
+            for tuples_per_tg in TUPLES_PER_TILEGROUP:
+
+                data_file = VERTICAL_DIR + "/" + str(tuples_per_tg) + "/" + str(column_count) + "/" + str(write_ratio) + "/" + "vertical.csv"
+    
+                dataset = loadDataFile(10, 2, data_file)
+                datasets.append(dataset)
+    
+            fig = create_selectivity_line_chart(datasets)
+
+            if write_ratio == 0:
+                write_mix = "rd"
+            else:
+                write_mix = "rw"
+
+            if column_count_type == 1:
+                table_type = "narrow"
+            else:
+                table_type = "wide"
+
+            fileName = "vertical-" + table_type + "-" + write_mix + ".pdf"
+
+            saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
+                
+
 # OPERATOR -- PLOT
 def operator_plot():
 
@@ -663,7 +702,8 @@ def collect_stats(result_dir,
         projectivity = data[3]
         column_count = data[4]
         write_ratio = data[5]
-        stat = data[6]
+        tuples_per_tg = data[6]
+        stat = data[7]
 
         if(layout == "0"):
             layout = "row"
@@ -677,12 +717,15 @@ def collect_stats(result_dir,
         elif(operator == "2"):
             operator = "aggregate"
 
-        # PROJECTIVITY/SELECTIVITY CATEGORY
+        # PROJECTIVITY SELECTIVITY 
         if category == 1 or category == 2:
             result_directory = result_dir + "/" + layout + "/" + operator + "/" + column_count + "/" + write_ratio
-        # OPERATOR CATEGORY
+        # OPERATOR 
         elif category == 3:
             result_directory = result_dir + "/" + layout + "/" + str(projectivity) + "/" + column_count + "/" + write_ratio
+        # VERTICAL 
+        elif category == 4:
+            result_directory = result_dir + "/" + str(tuples_per_tg) + "/" + column_count + "/" + write_ratio
 
         if not os.path.exists(result_directory):
             os.makedirs(result_directory)
@@ -690,11 +733,11 @@ def collect_stats(result_dir,
 
         result_file = open(file_name, "a")
 
-        # PROJECTIVITY/SELECTIVITY CATEGORY
+        # PROJECTIVITY 
         if category == 1:
             result_file.write(str(projectivity) + " , " + str(stat) + "\n")
-        # OPERATOR CATEGORY
-        elif category == 2 or category == 3:
+        # SELECTIVITY OPERATOR VERTICAL
+        elif category == 2 or category == 3 or category == 4:
             result_file.write(str(selectivity) + " , " + str(stat) + "\n")
 
         result_file.close()
@@ -776,6 +819,19 @@ def operator_eval():
     # COLLECT STATS
     collect_stats(OPERATOR_DIR, "operator.csv", 3)
 
+# VERTICAL -- EVAL
+def vertical_eval():
+
+    # CLEAN UP RESULT DIR
+    clean_up_dir(VERTICAL_DIR)
+
+    # RUN EXPERIMENT
+    run_experiment(HYADAPT, SCALE_FACTOR,
+                   TRANSACTION_COUNT, VERTICAL_EXPERIMENT)
+
+    # COLLECT STATS
+    collect_stats(VERTICAL_DIR, "vertical.csv", 4)
+
 # YCSB -- EVAL
 def ycsb_eval():
 
@@ -800,11 +856,13 @@ if __name__ == '__main__':
     parser.add_argument("-s", "--selectivity", help='eval selectivity', action='store_true')
     parser.add_argument("-o", "--operator", help='eval operator', action='store_true')
     parser.add_argument("-y", "--ycsb", help='eval ycsb', action='store_true')
+    parser.add_argument("-v", "--vertical", help='eval vertical', action='store_true')
 
     parser.add_argument("-a", "--projectivity_plot", help='plot projectivity', action='store_true')
     parser.add_argument("-b", "--selectivity_plot", help='plot selectivity', action='store_true')
     parser.add_argument("-c", "--operator_plot", help='plot operator', action='store_true')
     parser.add_argument("-d", "--ycsb_plot", help='plot operator', action='store_true')
+    parser.add_argument("-e", "--vertical_plot", help='plot operator', action='store_true')
 
     args = parser.parse_args()
 
@@ -831,6 +889,12 @@ if __name__ == '__main__':
 
     if args.ycsb_plot:
         ycsb_plot()
+
+    if args.vertical:
+        vertical_eval()
+
+    if args.vertical_plot:
+        vertical_plot()
 
     #create_legend()
     #create_bar_legend()
