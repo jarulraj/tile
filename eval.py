@@ -216,6 +216,36 @@ def saveGraph(fig, output, width, height):
 # PLOT
 ###################################################################################
 
+def create_bar_legend():
+    fig = pylab.figure()
+    ax1 = fig.add_subplot(111)
+
+    figlegend = pylab.figure(figsize=(6, 1.0))
+
+    num_items = len(LAYOUTS);   
+    ind = np.arange(1)  
+    margin = 0.10
+    width = ((1.0 - 2 * margin) / num_items) * 2      
+      
+    bars = [None] * len(LAYOUTS) * 2
+
+    for group in xrange(len(LAYOUTS)):        
+        data = [1]
+        bars[group] = ax1.bar(ind + margin + (group * width), data, width, 
+                              color=OPT_COLORS[group], 
+                              hatch=OPT_PATTERNS[group * 2], 
+                              linewidth=BAR_LINEWIDTH)
+
+    LABELS = ["Row", "Column", "Hybrid"]
+        
+    # LEGEND
+    figlegend.legend(bars, LABELS, prop=LABEL_FP, 
+                     loc=1, ncol=3, 
+                     mode="expand", shadow=OPT_LEGEND_SHADOW, 
+                     frameon=False, borderaxespad=0.0, handleheight=2, handlelength=3.5)
+
+    figlegend.savefig('bar-legend.pdf')
+    
 def create_legend():
     fig = pylab.figure()
     ax1 = fig.add_subplot(111)
@@ -798,5 +828,6 @@ if __name__ == '__main__':
         ycsb_plot()
 
     #create_legend()
+    create_bar_legend()
 
 
