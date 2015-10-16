@@ -152,6 +152,7 @@ OPERATOR_EXPERIMENT = 3
 YCSB_EXPERIMENT = 1
 
 YCSB_SCALE_FACTOR = 100.0
+YCSB_TRANSACTION_COUNT = 10
 
 YCSB_OPERATIONS = ["Read", "Scan", "Insert", "Delete", "Update", "RMW"]
 
@@ -244,7 +245,7 @@ def create_bar_legend():
                      mode="expand", shadow=OPT_LEGEND_SHADOW, 
                      frameon=False, borderaxespad=0.0, handleheight=2, handlelength=3.5)
 
-    figlegend.savefig('bar-legend.pdf')
+    figlegend.savefig('legend_bar.pdf')
     
 def create_legend():
     fig = pylab.figure()
@@ -604,18 +605,26 @@ def operator_plot():
 def ycsb_plot():
 
     datasets = []
-    ycsb_column_count = 100
+    column_count_type = 0
+    for column_count in COLUMN_COUNTS:
+        column_count_type = column_count_type + 1
     
-    for layout in LAYOUTS:
-        data_file = YCSB_DIR + "/" + layout + "/" + str(ycsb_column_count) + "/" + "ycsb.csv"
-
-        dataset = loadDataFile(6, 2, data_file)
-        datasets.append(dataset)
+        for layout in LAYOUTS:
+            data_file = YCSB_DIR + "/" + layout + "/" + str(column_count) + "/" + "ycsb.csv"
+    
+            dataset = loadDataFile(6, 2, data_file)
+            datasets.append(dataset)
                           
-    fig = create_ycsb_bar_chart(datasets)
-                        
-    fileName = "ycsb.pdf"
-    saveGraph(fig, fileName, width=OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/1.5) 
+        fig = create_ycsb_bar_chart(datasets)
+ 
+        if column_count_type == 1:
+            table_type = "narrow"
+        else:
+            table_type = "wide"                        
+                       
+        fileName = "ycsb-" + table_type + "-" + ".pdf"
+        
+        saveGraph(fig, fileName, width=OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0) 
 
 
 ###################################################################################
@@ -632,6 +641,7 @@ def clean_up_dir(result_directory):
 # RUN EXPERIMENT
 def run_experiment(program, 
                    scale_factor,
+                   transaction_count,
                    experiment_type):
 
     # cleanup
@@ -640,7 +650,7 @@ def run_experiment(program,
     subprocess.call([program,
                      "-e", str(experiment_type),
                      "-k", str(scale_factor),
-                     "-t", str(TRANSACTION_COUNT)])
+                     "-t", str(transaction_count)])
 
 
 # COLLECT STATS
@@ -743,7 +753,8 @@ def projectivity_eval():
     clean_up_dir(PROJECTIVITY_DIR)
 
     # RUN EXPERIMENT
-    run_experiment(HYADAPT, SCALE_FACTOR, PROJECTIVITY_EXPERIMENT)
+    run_experiment(HYADAPT, SCALE_FACTOR, 
+                   TRANSACTION_COUNT, PROJECTIVITY_EXPERIMENT)
 
     # COLLECT STATS
     collect_stats(PROJECTIVITY_DIR, "projectivity.csv", 1)
@@ -755,7 +766,8 @@ def selectivity_eval():
     clean_up_dir(SELECTIVITY_DIR)
 
     # RUN EXPERIMENT
-    run_experiment(HYADAPT, SCALE_FACTOR, SELECTIVITY_EXPERIMENT)
+    run_experiment(HYADAPT, SCALE_FACTOR, 
+                   TRANSACTION_COUNT, SELECTIVITY_EXPERIMENT)
 
     # COLLECT STATS
     collect_stats(SELECTIVITY_DIR, "selectivity.csv", 2)
@@ -767,7 +779,8 @@ def operator_eval():
     clean_up_dir(OPERATOR_DIR)
 
     # RUN EXPERIMENT
-    run_experiment(HYADAPT, SCALE_FACTOR, OPERATOR_EXPERIMENT)
+    run_experiment(HYADAPT, SCALE_FACTOR, 
+                   TRANSACTION_COUNT, OPERATOR_EXPERIMENT)
 
     # COLLECT STATS
     collect_stats(OPERATOR_DIR, "operator.csv", 3)
@@ -779,7 +792,8 @@ def ycsb_eval():
     clean_up_dir(YCSB_DIR)
 
     # RUN EXPERIMENT
-    run_experiment(YCSB, YCSB_SCALE_FACTOR, YCSB_EXPERIMENT)
+    run_experiment(YCSB, YCSB_SCALE_FACTOR, 
+                   YCSB_TRANSACTION_COUNT, YCSB_EXPERIMENT)
 
     # COLLECT STATS
     collect_ycsb_stats(YCSB_DIR, "ycsb.csv")
@@ -828,6 +842,6 @@ if __name__ == '__main__':
         ycsb_plot()
 
     #create_legend()
-    create_bar_legend()
+    #create_bar_legend()
 
 
