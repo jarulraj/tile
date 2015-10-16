@@ -69,7 +69,7 @@ OPT_GRAPH_WIDTH = 400
 # to match the length of your data.
 
 NUM_COLORS = 5
-COLOR_MAP = ( '#F58A87', '#80CA86', '#9EC9E9', "#F15854", "#66A26B", "#5DA5DA")
+COLOR_MAP = ( '#F58A87', '#80CA86', '#9EC9E9', '#FED113', '#D89761' )
 
 
 #COLOR_MAP = ('#F15854', '#9C9F84', '#F7DCB4', '#991809', '#5C755E', '#A97D5D')
@@ -249,6 +249,35 @@ def create_bar_legend():
 
     figlegend.savefig('legend_bar.pdf')
 
+def create_vertical_legend():
+    fig = pylab.figure()
+    ax1 = fig.add_subplot(111)
+
+    figlegend = pylab.figure(figsize=(9, 1.0))
+
+    num_items = len(LAYOUTS);
+    ind = np.arange(1)
+    margin = 0.10
+    width = ((1.0 - 2 * margin) / num_items) * 2
+
+    bars = [None] * len(TUPLES_PER_TILEGROUP) * 2
+
+    for group in xrange(len(TUPLES_PER_TILEGROUP)):
+        data = [1]
+        bars[group] = ax1.bar(ind + margin + (group * width), data, width,
+                              color=OPT_COLORS[group],
+                              linewidth=BAR_LINEWIDTH)
+
+    LABELS = ["Row", "Column", "Hybrid"]
+
+    # LEGEND
+    figlegend.legend(bars, TUPLES_PER_TILEGROUP, prop=LABEL_FP,
+                     loc=1, ncol=5,
+                     mode="expand", shadow=OPT_LEGEND_SHADOW,
+                     frameon=False, borderaxespad=0.0, handleheight=2, handlelength=3.5)
+
+    figlegend.savefig('legend_vertical.pdf')
+
 def create_legend():
     fig = pylab.figure()
     ax1 = fig.add_subplot(111)
@@ -366,6 +395,57 @@ def create_selectivity_line_chart(datasets):
     ax1.minorticks_off()
     ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
     #ax1.set_yscale('log', basey=2)
+
+    # X-AXIS
+    XAXIS_MIN = 0.1
+    XAXIS_MAX = 1.1
+    ax1.set_xlabel("Fraction of Tuples Selected", fontproperties=LABEL_FP)
+    ax1.set_xlim([XAXIS_MIN, XAXIS_MAX])
+
+    for label in ax1.get_yticklabels() :
+        label.set_fontproperties(TICK_FP)
+    for label in ax1.get_xticklabels() :
+        label.set_fontproperties(TICK_FP)
+
+    return (fig)
+
+def create_vertical_line_chart(datasets):
+    fig = plot.figure()
+    ax1 = fig.add_subplot(111)
+
+    # X-AXIS
+    x_values = SELECTIVITY
+    N = len(x_values)
+    x_labels = x_values
+
+    num_items = len(TUPLES_PER_TILEGROUP);
+    ind = np.arange(N)
+    idx = 0
+
+    # GROUP
+    for group_index, group in enumerate(TUPLES_PER_TILEGROUP):
+        group_data = []
+
+        # LINE
+        for line_index, line in enumerate(x_values):
+            group_data.append(datasets[group_index][line_index][1])
+
+        LOG.info("%s group_data = %s ", group, str(group_data))
+
+        ax1.plot(x_values, group_data, color=OPT_LINE_COLORS[idx], linewidth=OPT_LINE_WIDTH,
+                 marker=OPT_MARKERS[idx], markersize=OPT_MARKER_SIZE, label=str(group))
+
+        idx = idx + 1
+
+    # GRID
+    axes = ax1.get_axes()
+    makeGrid(ax1)
+
+    # Y-AXIS
+    ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
+    ax1.minorticks_off()
+    ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
+    ax1.set_yscale('log', basey=10)
 
     # X-AXIS
     XAXIS_MIN = 0.1
@@ -582,7 +662,7 @@ def vertical_plot():
                 dataset = loadDataFile(10, 2, data_file)
                 datasets.append(dataset)
     
-            fig = create_selectivity_line_chart(datasets)
+            fig = create_vertical_line_chart(datasets)
 
             if write_ratio == 0:
                 write_mix = "rd"
@@ -898,5 +978,6 @@ if __name__ == '__main__':
 
     #create_legend()
     #create_bar_legend()
+    create_vertical_legend()
 
 
