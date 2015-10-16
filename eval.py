@@ -42,6 +42,8 @@ import matplotlib
 from options import *
 from functools import wraps
 
+import colormap as cmap
+
 ###################################################################################
 # LOGGING CONFIGURATION
 ###################################################################################
@@ -65,7 +67,14 @@ OPT_FONT_NAME = 'Helvetica'
 OPT_GRAPH_HEIGHT = 300
 OPT_GRAPH_WIDTH = 400
 
-COLOR_MAP = ('#F15854', '#9C9F84', '#F7DCB4', '#991809', '#5C755E', '#A97D5D')
+# Make a list by cycling through the colors you care about
+# to match the length of your data.
+
+NUM_COLORS = 5
+COLOR_MAP = ( '#F58A87', '#80CA86', '#9EC9E9', "#F15854", "#66A26B", "#5DA5DA")
+
+
+#COLOR_MAP = ('#F15854', '#9C9F84', '#F7DCB4', '#991809', '#5C755E', '#A97D5D')
 OPT_COLORS = COLOR_MAP
 
 OPT_GRID_COLOR = 'gray'
@@ -74,7 +83,7 @@ OPT_MARKERS = (['o', 's', 'v', "^", "h", "v", ">", "x", "d", "<", "|", "", "|", 
 OPT_PATTERNS = ([ "////", "////", "o", "o", "\\\\" , "\\\\" , "//////", "//////", ".", "." , "\\\\\\" , "\\\\\\" ])
 
 OPT_LABEL_WEIGHT = 'bold'
-OPT_LINE_COLORS = ('#FDC086', '#B3E2Cd', '#FC8D62', '#A6CEE3', '#F58A87')
+OPT_LINE_COLORS = COLOR_MAP
 OPT_LINE_WIDTH = 5.0
 OPT_MARKER_SIZE = 8.0
 DATA_LABELS = []
@@ -90,6 +99,7 @@ LEGEND_FONT_SIZE = 20
 
 AXIS_LINEWIDTH = 1.3
 BAR_LINEWIDTH = 1.2
+
 
 matplotlib.rcParams['ps.useafm'] = True
 matplotlib.rcParams['pdf.use14corefonts'] = True
@@ -112,12 +122,14 @@ BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 
 PELOTON_BUILD_DIR = BASE_DIR + "/../peloton/build"
 HYADAPT = PELOTON_BUILD_DIR + "/src/hyadapt"
+YCSB = PELOTON_BUILD_DIR + "/src/ycsb"
 
 OUTPUT_FILE = "outputfile.summary"
 
 PROJECTIVITY_DIR = BASE_DIR + "/results/projectivity/"
 SELECTIVITY_DIR = BASE_DIR + "/results/selectivity/"
 OPERATOR_DIR = BASE_DIR + "/results/operator/"
+YCSB_DIR = BASE_DIR + "/results/ycsb/"
 
 LAYOUTS = ("row", "column", "hybrid")
 OPERATORS = ("direct", "aggregate")
@@ -137,6 +149,12 @@ TRANSACTION_COUNT = 3
 PROJECTIVITY_EXPERIMENT = 1
 SELECTIVITY_EXPERIMENT = 2
 OPERATOR_EXPERIMENT = 3
+YCSB_EXPERIMENT = 1
+
+YCSB_SCALE_FACTOR = 100.0
+YCSB_TRANSACTION_COUNT = 10
+
+YCSB_OPERATIONS = ["Read", "Scan", "Insert", "Delete", "Update", "RMW"]
 
 ###################################################################################
 # UTILS
@@ -199,6 +217,36 @@ def saveGraph(fig, output, width, height):
 # PLOT
 ###################################################################################
 
+def create_bar_legend():
+    fig = pylab.figure()
+    ax1 = fig.add_subplot(111)
+
+    figlegend = pylab.figure(figsize=(6, 1.0))
+
+    num_items = len(LAYOUTS);   
+    ind = np.arange(1)  
+    margin = 0.10
+    width = ((1.0 - 2 * margin) / num_items) * 2      
+      
+    bars = [None] * len(LAYOUTS) * 2
+
+    for group in xrange(len(LAYOUTS)):        
+        data = [1]
+        bars[group] = ax1.bar(ind + margin + (group * width), data, width, 
+                              color=OPT_COLORS[group], 
+                              hatch=OPT_PATTERNS[group * 2], 
+                              linewidth=BAR_LINEWIDTH)
+
+    LABELS = ["Row", "Column", "Hybrid"]
+        
+    # LEGEND
+    figlegend.legend(bars, LABELS, prop=LABEL_FP, 
+                     loc=1, ncol=3, 
+                     mode="expand", shadow=OPT_LEGEND_SHADOW, 
+                     frameon=False, borderaxespad=0.0, handleheight=2, handlelength=3.5)
+
+    figlegend.savefig('legend_bar.pdf')
+    
 def create_legend():
     fig = pylab.figure()
     ax1 = fig.add_subplot(111)
@@ -387,6 +435,59 @@ def create_operator_line_chart(datasets):
 
     return (fig)
 
+def create_ycsb_bar_chart(datasets):
+    fig = plot.figure()
+    ax1 = fig.add_subplot(111)
+     
+    x_values = YCSB_OPERATIONS
+    N = len(x_values)
+    x_labels = YCSB_OPERATIONS
+    
+    ind = np.arange(N)  
+    margin = 0.15
+    width = ((1.0 - 2 * margin) / N) * 2      
+    bars = [None] * len(LAYOUTS) * N
+        
+    for group in xrange(len(datasets)):
+        # GROUP
+        latencies = []   
+
+        for line in  xrange(len(datasets[group])):
+            for col in  xrange(len(datasets[group][line])):
+                if col == 1:
+                    latencies.append(datasets[group][line][col])
+  
+        LOG.info("%s latencies = %s ", LAYOUTS[group], str(latencies))
+        
+        bars[group] = ax1.bar(ind + margin + (group * width), latencies, width, 
+                              color=OPT_COLORS[group], 
+                              hatch=OPT_PATTERNS[group*2], 
+                              linewidth=BAR_LINEWIDTH)
+
+                        
+    # GRID
+    axes = ax1.get_axes()
+    #axes.set_ylim(0.01, 1000000)        
+    makeGrid(ax1)
+    
+    # Y-AXIS
+    ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
+    ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
+    ax1.minorticks_off()
+       
+    # X-AXIS
+    #ax1.set_xlabel("Number of transactions", fontproperties=LABEL_FP)
+    ax1.set_xticklabels(x_labels)
+    ax1.set_xticks(ind + 0.5)
+    ax1.tick_params(axis='x', which='both', bottom='off', top='off')
+
+    for label in ax1.get_yticklabels() :
+        label.set_fontproperties(TICK_FP)
+    for label in ax1.get_xticklabels() :
+        label.set_fontproperties(TICK_FP)
+        
+    return (fig)
+
 ###################################################################################
 # PLOT HELPERS
 ###################################################################################
@@ -500,6 +601,32 @@ def operator_plot():
                 saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
 
 
+# YCSB -- PLOT
+def ycsb_plot():
+
+    datasets = []
+    column_count_type = 0
+    for column_count in COLUMN_COUNTS:
+        column_count_type = column_count_type + 1
+    
+        for layout in LAYOUTS:
+            data_file = YCSB_DIR + "/" + layout + "/" + str(column_count) + "/" + "ycsb.csv"
+    
+            dataset = loadDataFile(6, 2, data_file)
+            datasets.append(dataset)
+                          
+        fig = create_ycsb_bar_chart(datasets)
+ 
+        if column_count_type == 1:
+            table_type = "narrow"
+        else:
+            table_type = "wide"                        
+                       
+        fileName = "ycsb-" + table_type + "-" + ".pdf"
+        
+        saveGraph(fig, fileName, width=OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0) 
+
+
 ###################################################################################
 # EVAL HELPERS
 ###################################################################################
@@ -512,15 +639,18 @@ def clean_up_dir(result_directory):
         os.makedirs(result_directory)
 
 # RUN EXPERIMENT
-def run_experiment(experiment_type):
+def run_experiment(program, 
+                   scale_factor,
+                   transaction_count,
+                   experiment_type):
 
     # cleanup
     subprocess.call(["rm -f " + OUTPUT_FILE], shell=True)
 
-    subprocess.call([HYADAPT,
+    subprocess.call([program,
                      "-e", str(experiment_type),
-                     "-k", str(SCALE_FACTOR),
-                     "-t", str(TRANSACTION_COUNT)])
+                     "-k", str(scale_factor),
+                     "-t", str(transaction_count)])
 
 
 # COLLECT STATS
@@ -578,6 +708,40 @@ def collect_stats(result_dir,
             
         result_file.close()
 
+# COLLECT STATS
+def collect_ycsb_stats(result_dir,
+                       result_file_name):
+
+    fp = open(OUTPUT_FILE)
+    lines = fp.readlines()
+    fp.close()
+
+    for line in lines:
+        data = line.split()
+
+        # Collect info
+        layout = data[0]
+        operator = data[1]
+        column_count = data[2]
+        stat = data[3]
+
+        if(layout == "0"):
+            layout = "row"
+        elif(layout == "1"):
+            layout = "column"
+        elif(layout == "2"):
+            layout = "hybrid"
+
+        result_directory = result_dir + "/" + layout + "/" + column_count
+
+        if not os.path.exists(result_directory):
+            os.makedirs(result_directory)
+        file_name = result_directory + "/" + result_file_name
+
+        result_file = open(file_name, "a")
+        result_file.write(str(operator) + " , " + str(stat) + "\n")            
+        result_file.close()
+
 ###################################################################################
 # EVAL
 ###################################################################################
@@ -589,7 +753,8 @@ def projectivity_eval():
     clean_up_dir(PROJECTIVITY_DIR)
 
     # RUN EXPERIMENT
-    run_experiment(PROJECTIVITY_EXPERIMENT)
+    run_experiment(HYADAPT, SCALE_FACTOR, 
+                   TRANSACTION_COUNT, PROJECTIVITY_EXPERIMENT)
 
     # COLLECT STATS
     collect_stats(PROJECTIVITY_DIR, "projectivity.csv", 1)
@@ -601,7 +766,8 @@ def selectivity_eval():
     clean_up_dir(SELECTIVITY_DIR)
 
     # RUN EXPERIMENT
-    run_experiment(SELECTIVITY_EXPERIMENT)
+    run_experiment(HYADAPT, SCALE_FACTOR, 
+                   TRANSACTION_COUNT, SELECTIVITY_EXPERIMENT)
 
     # COLLECT STATS
     collect_stats(SELECTIVITY_DIR, "selectivity.csv", 2)
@@ -613,10 +779,24 @@ def operator_eval():
     clean_up_dir(OPERATOR_DIR)
 
     # RUN EXPERIMENT
-    run_experiment(OPERATOR_EXPERIMENT)
+    run_experiment(HYADAPT, SCALE_FACTOR, 
+                   TRANSACTION_COUNT, OPERATOR_EXPERIMENT)
 
     # COLLECT STATS
     collect_stats(OPERATOR_DIR, "operator.csv", 3)
+
+# YCSB -- EVAL
+def ycsb_eval():
+
+    # CLEAN UP RESULT DIR
+    clean_up_dir(YCSB_DIR)
+
+    # RUN EXPERIMENT
+    run_experiment(YCSB, YCSB_SCALE_FACTOR, 
+                   YCSB_TRANSACTION_COUNT, YCSB_EXPERIMENT)
+
+    # COLLECT STATS
+    collect_ycsb_stats(YCSB_DIR, "ycsb.csv")
 
 ###################################################################################
 # MAIN
@@ -628,10 +808,12 @@ if __name__ == '__main__':
     parser.add_argument("-p", "--projectivity", help='eval projectivity', action='store_true')
     parser.add_argument("-s", "--selectivity", help='eval selectivity', action='store_true')
     parser.add_argument("-o", "--operator", help='eval operator', action='store_true')
+    parser.add_argument("-y", "--ycsb", help='eval ycsb', action='store_true')
 
     parser.add_argument("-a", "--projectivity_plot", help='plot projectivity', action='store_true')
     parser.add_argument("-b", "--selectivity_plot", help='plot selectivity', action='store_true')
     parser.add_argument("-c", "--operator_plot", help='plot operator', action='store_true')
+    parser.add_argument("-d", "--ycsb_plot", help='plot operator', action='store_true')
 
     args = parser.parse_args()
 
@@ -653,6 +835,13 @@ if __name__ == '__main__':
     if args.operator_plot:
         operator_plot();
 
+    if args.ycsb:
+        ycsb_eval()
+
+    if args.ycsb_plot:
+        ycsb_plot()
+
     #create_legend()
+    #create_bar_legend()
 
 
