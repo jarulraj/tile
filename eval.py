@@ -29,7 +29,7 @@ import matplotlib.pyplot as plot
 from matplotlib.font_manager import FontProperties
 from matplotlib.ticker import MaxNLocator
 from matplotlib.ticker import LogLocator
-from matplotlib.ticker import LinearLocator    
+from matplotlib.ticker import LinearLocator
 from pprint import pprint, pformat
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib import rc
@@ -221,30 +221,30 @@ def create_bar_legend():
 
     figlegend = pylab.figure(figsize=(6, 1.0))
 
-    num_items = len(LAYOUTS);   
-    ind = np.arange(1)  
+    num_items = len(LAYOUTS);
+    ind = np.arange(1)
     margin = 0.10
-    width = ((1.0 - 2 * margin) / num_items) * 2      
-      
+    width = ((1.0 - 2 * margin) / num_items) * 2
+
     bars = [None] * len(LAYOUTS) * 2
 
-    for group in xrange(len(LAYOUTS)):        
+    for group in xrange(len(LAYOUTS)):
         data = [1]
-        bars[group] = ax1.bar(ind + margin + (group * width), data, width, 
-                              color=OPT_COLORS[group], 
-                              hatch=OPT_PATTERNS[group * 2], 
+        bars[group] = ax1.bar(ind + margin + (group * width), data, width,
+                              color=OPT_COLORS[group],
+                              hatch=OPT_PATTERNS[group * 2],
                               linewidth=BAR_LINEWIDTH)
 
     LABELS = ["Row", "Column", "Hybrid"]
-        
+
     # LEGEND
-    figlegend.legend(bars, LABELS, prop=LABEL_FP, 
-                     loc=1, ncol=3, 
-                     mode="expand", shadow=OPT_LEGEND_SHADOW, 
+    figlegend.legend(bars, LABELS, prop=LABEL_FP,
+                     loc=1, ncol=3,
+                     mode="expand", shadow=OPT_LEGEND_SHADOW,
                      frameon=False, borderaxespad=0.0, handleheight=2, handlelength=3.5)
 
     figlegend.savefig('legend_bar.pdf')
-    
+
 def create_legend():
     fig = pylab.figure()
     ax1 = fig.add_subplot(111)
@@ -390,7 +390,7 @@ def create_operator_line_chart(datasets):
     idx = 0
 
     YLIMIT = 0
-     
+
     # GROUP
     for group_index, group in enumerate(LAYOUTS):
         group_data = []
@@ -405,15 +405,15 @@ def create_operator_line_chart(datasets):
                  marker=OPT_MARKERS[idx], markersize=OPT_MARKER_SIZE, label=str(group))
 
         idx = idx + 1
-        
+
         YLIMIT = max(YLIMIT, max(group_data))
 
     # GRID
     axes = ax1.get_axes()
     makeGrid(ax1)
 
-    YLIMIT = next_power_of_10(YLIMIT)    
-    
+    YLIMIT = next_power_of_10(YLIMIT)
+
     # Y-AXIS
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
@@ -422,7 +422,7 @@ def create_operator_line_chart(datasets):
 
     # X-AXIS
     XAXIS_MIN = 0.1
-    XAXIS_MAX = 1.1    
+    XAXIS_MAX = 1.1
     ax1.set_xlabel("Fraction of Tuples Selected", fontproperties=LABEL_FP)
     ax1.set_xlim([XAXIS_MIN, XAXIS_MAX])
 
@@ -436,43 +436,43 @@ def create_operator_line_chart(datasets):
 def create_ycsb_bar_chart(datasets):
     fig = plot.figure()
     ax1 = fig.add_subplot(111)
-     
+
     x_values = YCSB_OPERATIONS
     N = len(x_values)
     x_labels = YCSB_OPERATIONS
-    
-    ind = np.arange(N)  
+
+    ind = np.arange(N)
     margin = 0.15
-    width = ((1.0 - 2 * margin) / N) * 2      
+    width = ((1.0 - 2 * margin) / N) * 2
     bars = [None] * len(LAYOUTS) * N
-        
+
     for group in xrange(len(datasets)):
         # GROUP
-        latencies = []   
+        latencies = []
 
         for line in  xrange(len(datasets[group])):
             for col in  xrange(len(datasets[group][line])):
                 if col == 1:
                     latencies.append(datasets[group][line][col])
-  
+
         LOG.info("%s latencies = %s ", LAYOUTS[group], str(latencies))
-        
-        bars[group] = ax1.bar(ind + margin + (group * width), latencies, width, 
-                              color=OPT_COLORS[group], 
-                              hatch=OPT_PATTERNS[group*2], 
+
+        bars[group] = ax1.bar(ind + margin + (group * width), latencies, width,
+                              color=OPT_COLORS[group],
+                              hatch=OPT_PATTERNS[group*2],
                               linewidth=BAR_LINEWIDTH)
 
-                        
+
     # GRID
     axes = ax1.get_axes()
-    #axes.set_ylim(0.01, 1000000)        
+    #axes.set_ylim(0.01, 1000000)
     makeGrid(ax1)
-    
+
     # Y-AXIS
     ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
-       
+
     # X-AXIS
     #ax1.set_xlabel("Number of transactions", fontproperties=LABEL_FP)
     ax1.set_xticklabels(x_labels)
@@ -483,7 +483,7 @@ def create_ycsb_bar_chart(datasets):
         label.set_fontproperties(TICK_FP)
     for label in ax1.get_xticklabels() :
         label.set_fontproperties(TICK_FP)
-        
+
     return (fig)
 
 ###################################################################################
@@ -515,14 +515,14 @@ def projectivity_plot():
                     write_mix = "rd"
                 else:
                     write_mix = "rw"
-                                    
+
                 if column_count_type == 1:
                     table_type = "narrow"
                 else:
-                    table_type = "wide"                        
-                        
+                    table_type = "wide"
+
                 fileName = "projectivity-" + operator + "-" + table_type + "-" + write_mix + ".pdf"
-                 
+
                 saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
 
 # SELECTIVITY -- PLOT
@@ -550,12 +550,12 @@ def selectivity_plot():
                     write_mix = "rd"
                 else:
                     write_mix = "rw"
-                                    
+
                 if column_count_type == 1:
                     table_type = "narrow"
                 else:
-                    table_type = "wide"                        
-                        
+                    table_type = "wide"
+
                 fileName = "selectivity-" + operator + "-" + table_type + "-" + write_mix + ".pdf"
 
                 saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
@@ -588,12 +588,12 @@ def operator_plot():
                     write_mix = "rd"
                 else:
                     write_mix = "rw"
-                                    
+
                 if column_count_type == 1:
                     table_type = "narrow"
                 else:
-                    table_type = "wide"                        
-                        
+                    table_type = "wide"
+
                 fileName = "operator-" + str(projectivity_type) + "-" + table_type + "-" + write_mix + ".pdf"
 
                 saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
@@ -602,27 +602,17 @@ def operator_plot():
 # YCSB -- PLOT
 def ycsb_plot():
 
-    column_count_type = 0
-    for column_count in COLUMN_COUNTS:
-        column_count_type = column_count_type + 1
-        datasets = []
-    
-        for layout in LAYOUTS:
-            data_file = YCSB_DIR + "/" + layout + "/" + str(column_count) + "/" + "ycsb.csv"
-    
-            dataset = loadDataFile(6, 2, data_file)
-            datasets.append(dataset)
-                          
-        fig = create_ycsb_bar_chart(datasets)
- 
-        if column_count_type == 1:
-            table_type = "narrow"
-        else:
-            table_type = "wide"                        
-                       
-        fileName = "ycsb-" + table_type + ".pdf"
-        
-        saveGraph(fig, fileName, width=OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0) 
+    for layout in LAYOUTS:
+        data_file = YCSB_DIR + "/" + layout + "/" + str(column_count) + "/" + "ycsb.csv"
+
+        dataset = loadDataFile(6, 2, data_file)
+        datasets.append(dataset)
+
+    fig = create_ycsb_bar_chart(datasets)
+
+    fileName = "ycsb.pdf"
+
+    saveGraph(fig, fileName, width=OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
 
 
 ###################################################################################
@@ -637,7 +627,7 @@ def clean_up_dir(result_directory):
         os.makedirs(result_directory)
 
 # RUN EXPERIMENT
-def run_experiment(program, 
+def run_experiment(program,
                    scale_factor,
                    transaction_count,
                    experiment_type):
@@ -703,7 +693,7 @@ def collect_stats(result_dir,
         # OPERATOR CATEGORY
         elif category == 2 or category == 3:
             result_file.write(str(selectivity) + " , " + str(stat) + "\n")
-            
+
         result_file.close()
 
 # COLLECT STATS
@@ -737,7 +727,7 @@ def collect_ycsb_stats(result_dir,
         file_name = result_directory + "/" + result_file_name
 
         result_file = open(file_name, "a")
-        result_file.write(str(operator) + " , " + str(stat) + "\n")            
+        result_file.write(str(operator) + " , " + str(stat) + "\n")
         result_file.close()
 
 ###################################################################################
@@ -751,7 +741,7 @@ def projectivity_eval():
     clean_up_dir(PROJECTIVITY_DIR)
 
     # RUN EXPERIMENT
-    run_experiment(HYADAPT, SCALE_FACTOR, 
+    run_experiment(HYADAPT, SCALE_FACTOR,
                    TRANSACTION_COUNT, PROJECTIVITY_EXPERIMENT)
 
     # COLLECT STATS
@@ -764,7 +754,7 @@ def selectivity_eval():
     clean_up_dir(SELECTIVITY_DIR)
 
     # RUN EXPERIMENT
-    run_experiment(HYADAPT, SCALE_FACTOR, 
+    run_experiment(HYADAPT, SCALE_FACTOR,
                    TRANSACTION_COUNT, SELECTIVITY_EXPERIMENT)
 
     # COLLECT STATS
@@ -777,7 +767,7 @@ def operator_eval():
     clean_up_dir(OPERATOR_DIR)
 
     # RUN EXPERIMENT
-    run_experiment(HYADAPT, SCALE_FACTOR, 
+    run_experiment(HYADAPT, SCALE_FACTOR,
                    TRANSACTION_COUNT, OPERATOR_EXPERIMENT)
 
     # COLLECT STATS
@@ -790,7 +780,7 @@ def ycsb_eval():
     clean_up_dir(YCSB_DIR)
 
     # RUN EXPERIMENT
-    run_experiment(YCSB, YCSB_SCALE_FACTOR, 
+    run_experiment(YCSB, YCSB_SCALE_FACTOR,
                    YCSB_TRANSACTION_COUNT, YCSB_EXPERIMENT)
 
     # COLLECT STATS
