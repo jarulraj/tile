@@ -150,7 +150,7 @@ OPERATOR_EXPERIMENT = 3
 YCSB_EXPERIMENT = 1
 
 YCSB_SCALE_FACTOR = 100.0
-YCSB_TRANSACTION_COUNT = 10
+YCSB_TRANSACTION_COUNT = 100
 
 YCSB_OPERATIONS = ["Read", "Scan", "Insert", "Delete", "Update", "RMW"]
 
@@ -602,10 +602,10 @@ def operator_plot():
 # YCSB -- PLOT
 def ycsb_plot():
 
-    datasets = []
     column_count_type = 0
     for column_count in COLUMN_COUNTS:
         column_count_type = column_count_type + 1
+        datasets = []
     
         for layout in LAYOUTS:
             data_file = YCSB_DIR + "/" + layout + "/" + str(column_count) + "/" + "ycsb.csv"
@@ -620,7 +620,7 @@ def ycsb_plot():
         else:
             table_type = "wide"                        
                        
-        fileName = "ycsb-" + table_type + "-" + ".pdf"
+        fileName = "ycsb-" + table_type + ".pdf"
         
         saveGraph(fig, fileName, width=OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0) 
 
