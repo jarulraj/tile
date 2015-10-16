@@ -42,8 +42,6 @@ import matplotlib
 from options import *
 from functools import wraps
 
-import colormap as cmap
-
 ###################################################################################
 # LOGGING CONFIGURATION
 ###################################################################################
