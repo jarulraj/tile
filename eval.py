@@ -602,7 +602,7 @@ def operator_plot():
 # YCSB -- PLOT
 def ycsb_plot():
 
-    column_count = 100
+    column_count = 200
     datasets = []
 
     for layout in LAYOUTS:
