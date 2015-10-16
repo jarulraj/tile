@@ -602,6 +602,9 @@ def operator_plot():
 # YCSB -- PLOT
 def ycsb_plot():
 
+    column_count = 100
+    datasets = []
+
     for layout in LAYOUTS:
         data_file = YCSB_DIR + "/" + layout + "/" + str(column_count) + "/" + "ycsb.csv"
 
