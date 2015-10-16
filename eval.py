@@ -223,7 +223,7 @@ def create_bar_legend():
     fig = pylab.figure()
     ax1 = fig.add_subplot(111)
 
-    figlegend = pylab.figure(figsize=(6, 1.0))
+    figlegend = pylab.figure(figsize=(6, 0.5))
 
     num_items = len(LAYOUTS);
     ind = np.arange(1)
@@ -253,7 +253,7 @@ def create_vertical_legend():
     fig = pylab.figure()
     ax1 = fig.add_subplot(111)
 
-    figlegend = pylab.figure(figsize=(9, 1.0))
+    figlegend = pylab.figure(figsize=(9, 0.5))
 
     num_items = len(LAYOUTS);
     ind = np.arange(1)
@@ -977,7 +977,7 @@ if __name__ == '__main__':
         vertical_plot()
 
     #create_legend()
-    #create_bar_legend()
+    create_bar_legend()
     create_vertical_legend()
 
 
