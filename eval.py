@@ -129,20 +129,27 @@ SELECTIVITY_DIR = BASE_DIR + "/results/selectivity/"
 OPERATOR_DIR = BASE_DIR + "/results/operator/"
 YCSB_DIR = BASE_DIR + "/results/ycsb/"
 VERTICAL_DIR = BASE_DIR + "/results/vertical/"
+SUBSET_DIR = BASE_DIR + "/results/subset/"
 
 LAYOUTS = ("row", "column", "hybrid")
 OPERATORS = ("direct", "aggregate")
 
-SCALE_FACTOR = 1000.0
+SCALE_FACTOR = 1.0
 
 SELECTIVITY = (0.2, 0.4, 0.6, 0.8, 1.0)
 PROJECTIVITY = (0.1, 0.2, 0.3, 0.4, 0.5)
+SUBSET_RATIOS = (0.2, 0.4, 0.6, 0.8, 1)
+ACCESS_NUM_GROUPS = (1, 2, 4, 8, 16)
+
+SUBSET_SINGLE_GROUP_EXPERIMENT = "1"
+SUBSET_MULTIPLE_GROUP_EXPERIMENT = "2"
 
 OP_PROJECTIVITY = (0.1, 1.0)
 
 COLUMN_COUNTS = (50, 200)
 WRITE_RATIOS = (0, 0.1)
 TUPLES_PER_TILEGROUP = (10, 100, 1000, 10000, 100000)
+NUM_GROUPS = 5
 
 TRANSACTION_COUNT = 3
 
@@ -150,6 +157,7 @@ PROJECTIVITY_EXPERIMENT = 1
 SELECTIVITY_EXPERIMENT = 2
 OPERATOR_EXPERIMENT = 3
 VERTICAL_EXPERIMENT= 4
+SUBSET_EXPERIMENT= 5
 
 YCSB_EXPERIMENT = 1
 
@@ -268,8 +276,6 @@ def create_vertical_legend():
                               color=OPT_COLORS[group],
                               linewidth=BAR_LINEWIDTH)
 
-    LABELS = ["Row", "Column", "Hybrid"]
-
     # LEGEND
     figlegend.legend(bars, TUPLES_PER_TILEGROUP, prop=LABEL_FP,
                      loc=1, ncol=5,
@@ -277,6 +283,62 @@ def create_vertical_legend():
                      frameon=False, borderaxespad=0.0, handleheight=2, handlelength=3.5)
 
     figlegend.savefig('legend_vertical.pdf')
+
+def create_subset_single_legend():
+    fig = pylab.figure()
+    ax1 = fig.add_subplot(111)
+
+    figlegend = pylab.figure(figsize=(9, 0.5))
+
+    num_items = len(LAYOUTS);
+    ind = np.arange(1)
+    margin = 0.10
+    width = ((1.0 - 2 * margin) / num_items) * 2
+
+    bars = [None] * len(SUBSET_RATIOS) * 2
+
+    for group in xrange(len(SUBSET_RATIOS)):
+        data = [1]
+        bars[group] = ax1.bar(ind + margin + (group * width), data, width,
+                              color=OPT_COLORS[group],
+                              linewidth=BAR_LINEWIDTH)
+
+    # LEGEND
+    figlegend.legend(bars, SUBSET_RATIOS, prop=LABEL_FP,
+                     loc=1, ncol=5,
+                     mode="expand", shadow=OPT_LEGEND_SHADOW,
+                     frameon=False, borderaxespad=0.0, handleheight=2, handlelength=3.5)
+
+    figlegend.savefig('legend_subset_single.pdf')
+    
+def create_subset_multiple_legend():
+    fig = pylab.figure()
+    ax1 = fig.add_subplot(111)
+
+    figlegend = pylab.figure(figsize=(9, 0.5))
+
+    num_items = len(LAYOUTS);
+    ind = np.arange(1)
+    margin = 0.10
+    width = ((1.0 - 2 * margin) / num_items) * 2
+
+    bars = [None] * len(ACCESS_NUM_GROUPS) * 2
+
+    for group in xrange(len(ACCESS_NUM_GROUPS)):
+        data = [1]
+        bars[group] = ax1.bar(ind + margin + (group * width), data, width,
+                              color=OPT_COLORS[group],
+                              linewidth=BAR_LINEWIDTH)
+
+
+    # LEGEND
+    figlegend.legend(bars, ACCESS_NUM_GROUPS, prop=LABEL_FP,
+                     loc=1, ncol=5,
+                     mode="expand", shadow=OPT_LEGEND_SHADOW,
+                     frameon=False, borderaxespad=0.0, handleheight=2, handlelength=3.5)
+
+    figlegend.savefig('legend_subset_multiple.pdf')
+        
 
 def create_legend():
     fig = pylab.figure()
@@ -517,6 +579,59 @@ def create_operator_line_chart(datasets):
 
     return (fig)
 
+def create_subset_bar_chart(datasets):
+    fig = plot.figure()
+    ax1 = fig.add_subplot(111)
+
+    x_values = SELECTIVITY
+    N = len(x_values)
+    x_labels = SELECTIVITY
+
+    ind = np.arange(N)
+    margin = 0.15
+    width = ((1.0 - 2 * margin) / N) 
+    bars = [None] * len(SUBSET_RATIOS) * N
+
+    for group in xrange(len(datasets)):
+        # GROUP
+        latencies = []
+
+        for line in  xrange(len(datasets[group])):
+            for col in  xrange(len(datasets[group][line])):
+                if col == 1:
+                    latencies.append(datasets[group][line][col])
+
+        LOG.info("%s latencies = %s ", SUBSET_RATIOS[group], str(latencies))
+
+        bars[group] = ax1.bar(ind + margin + (group * width), latencies, width,
+                              color=OPT_COLORS[group],
+                              hatch=OPT_PATTERNS[group*2],
+                              linewidth=BAR_LINEWIDTH)
+
+
+    # GRID
+    axes = ax1.get_axes()
+    #axes.set_ylim(0.01, 1000000)
+    makeGrid(ax1)
+
+    # Y-AXIS
+    ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
+    ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
+    ax1.minorticks_off()
+
+    # X-AXIS
+    ax1.set_xlabel("Fraction of Tuples Selected", fontproperties=LABEL_FP)
+    ax1.set_xticklabels(x_labels)
+    ax1.set_xticks(ind + 0.5)
+    ax1.tick_params(axis='x', which='both', bottom='off', top='off')
+
+    for label in ax1.get_yticklabels() :
+        label.set_fontproperties(TICK_FP)
+    for label in ax1.get_xticklabels() :
+        label.set_fontproperties(TICK_FP)
+
+    return (fig)
+
 def create_ycsb_bar_chart(datasets):
     fig = plot.figure()
     ax1 = fig.add_subplot(111)
@@ -736,6 +851,34 @@ def ycsb_plot():
 
     saveGraph(fig, fileName, width=OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
 
+# SUBSET -- PLOT
+def subset_plot():
+    
+    datasets = []
+    for subset_ratio in SUBSET_RATIOS:
+        data_file = SUBSET_DIR + "/" + SUBSET_SINGLE_GROUP_EXPERIMENT + "/" + str(subset_ratio) + "/" + "subset.csv"
+
+        dataset = loadDataFile(5, 2, data_file)
+        datasets.append(dataset)
+
+    fig = create_subset_bar_chart(datasets)
+
+    fileName = "subset-single.pdf"
+
+    saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
+
+    datasets = []
+    for access_num_group in ACCESS_NUM_GROUPS:
+        data_file = SUBSET_DIR + "/" + SUBSET_MULTIPLE_GROUP_EXPERIMENT + "/" + str(access_num_group) + "/" + "subset.csv"
+
+        dataset = loadDataFile(5, 2, data_file)
+        datasets.append(dataset)
+
+    fig = create_subset_bar_chart(datasets)
+
+    fileName = "subset-multiple.pdf"
+
+    saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
 
 ###################################################################################
 # EVAL HELPERS
@@ -782,8 +925,11 @@ def collect_stats(result_dir,
         projectivity = data[3]
         column_count = data[4]
         write_ratio = data[5]
-        tuples_per_tg = data[6]
-        stat = data[7]
+        subset_experiment_type = data[6]
+        access_num_group = data[7]
+        subset_ratio = data[8]
+        tuples_per_tg = data[9]
+        stat = data[10]
 
         if(layout == "0"):
             layout = "row"
@@ -797,15 +943,18 @@ def collect_stats(result_dir,
         elif(operator == "2"):
             operator = "aggregate"
 
-        # PROJECTIVITY SELECTIVITY 
-        if category == 1 or category == 2:
+        # MAKE RESULTS FILE DIR
+        if category == PROJECTIVITY_EXPERIMENT or category == SELECTIVITY_EXPERIMENT:
             result_directory = result_dir + "/" + layout + "/" + operator + "/" + column_count + "/" + write_ratio
-        # OPERATOR 
-        elif category == 3:
+        elif category == OPERATOR_EXPERIMENT:
             result_directory = result_dir + "/" + layout + "/" + str(projectivity) + "/" + column_count + "/" + write_ratio
-        # VERTICAL 
-        elif category == 4:
+        elif category == VERTICAL_EXPERIMENT:
             result_directory = result_dir + "/" + str(tuples_per_tg) + "/" + column_count + "/" + write_ratio
+        elif category == SUBSET_EXPERIMENT:
+            if subset_experiment_type == SUBSET_SINGLE_GROUP_EXPERIMENT:
+                result_directory = result_dir + "/" + str(subset_experiment_type) + "/" + str(subset_ratio)
+            elif subset_experiment_type == SUBSET_MULTIPLE_GROUP_EXPERIMENT:
+                result_directory = result_dir + "/" + str(subset_experiment_type) + "/" + str(access_num_group)                
 
         if not os.path.exists(result_directory):
             os.makedirs(result_directory)
@@ -813,11 +962,10 @@ def collect_stats(result_dir,
 
         result_file = open(file_name, "a")
 
-        # PROJECTIVITY 
-        if category == 1:
+        # WRITE OUT STATS
+        if category == PROJECTIVITY_EXPERIMENT:
             result_file.write(str(projectivity) + " , " + str(stat) + "\n")
-        # SELECTIVITY OPERATOR VERTICAL
-        elif category == 2 or category == 3 or category == 4:
+        elif category == SELECTIVITY_EXPERIMENT or category == OPERATOR_EXPERIMENT or category == VERTICAL_EXPERIMENT or category == SUBSET_EXPERIMENT:
             result_file.write(str(selectivity) + " , " + str(stat) + "\n")
 
         result_file.close()
@@ -871,7 +1019,7 @@ def projectivity_eval():
                    TRANSACTION_COUNT, PROJECTIVITY_EXPERIMENT)
 
     # COLLECT STATS
-    collect_stats(PROJECTIVITY_DIR, "projectivity.csv", 1)
+    collect_stats(PROJECTIVITY_DIR, "projectivity.csv", PROJECTIVITY_EXPERIMENT)
 
 # SELECTIVITY -- EVAL
 def selectivity_eval():
@@ -884,7 +1032,7 @@ def selectivity_eval():
                    TRANSACTION_COUNT, SELECTIVITY_EXPERIMENT)
 
     # COLLECT STATS
-    collect_stats(SELECTIVITY_DIR, "selectivity.csv", 2)
+    collect_stats(SELECTIVITY_DIR, "selectivity.csv", SELECTIVITY_EXPERIMENT)
 
 # OPERATOR -- EVAL
 def operator_eval():
@@ -897,7 +1045,7 @@ def operator_eval():
                    TRANSACTION_COUNT, OPERATOR_EXPERIMENT)
 
     # COLLECT STATS
-    collect_stats(OPERATOR_DIR, "operator.csv", 3)
+    collect_stats(OPERATOR_DIR, "operator.csv", OPERATOR_EXPERIMENT)
 
 # VERTICAL -- EVAL
 def vertical_eval():
@@ -910,7 +1058,7 @@ def vertical_eval():
                    TRANSACTION_COUNT, VERTICAL_EXPERIMENT)
 
     # COLLECT STATS
-    collect_stats(VERTICAL_DIR, "vertical.csv", 4)
+    collect_stats(VERTICAL_DIR, "vertical.csv", VERTICAL_EXPERIMENT)
 
 # YCSB -- EVAL
 def ycsb_eval():
@@ -925,6 +1073,19 @@ def ycsb_eval():
     # COLLECT STATS
     collect_ycsb_stats(YCSB_DIR, "ycsb.csv")
 
+# SUBSET -- EVAL
+def subset_eval():
+
+    # CLEAN UP RESULT DIR
+    clean_up_dir(SUBSET_DIR)
+
+    # RUN EXPERIMENT
+    run_experiment(HYADAPT, SCALE_FACTOR,
+                   TRANSACTION_COUNT, SUBSET_EXPERIMENT)
+
+    # COLLECT STATS
+    collect_stats(SUBSET_DIR, "subset.csv", SUBSET_EXPERIMENT)
+
 ###################################################################################
 # MAIN
 ###################################################################################
@@ -937,12 +1098,14 @@ if __name__ == '__main__':
     parser.add_argument("-o", "--operator", help='eval operator', action='store_true')
     parser.add_argument("-y", "--ycsb", help='eval ycsb', action='store_true')
     parser.add_argument("-v", "--vertical", help='eval vertical', action='store_true')
+    parser.add_argument("-u", "--subset", help='eval subset', action='store_true')
 
     parser.add_argument("-a", "--projectivity_plot", help='plot projectivity', action='store_true')
     parser.add_argument("-b", "--selectivity_plot", help='plot selectivity', action='store_true')
     parser.add_argument("-c", "--operator_plot", help='plot operator', action='store_true')
-    parser.add_argument("-d", "--ycsb_plot", help='plot operator', action='store_true')
-    parser.add_argument("-e", "--vertical_plot", help='plot operator', action='store_true')
+    parser.add_argument("-d", "--ycsb_plot", help='plot ycsb', action='store_true')
+    parser.add_argument("-e", "--vertical_plot", help='plot vertical', action='store_true')
+    parser.add_argument("-f", "--subset_plot", help='plot subset', action='store_true')
 
     args = parser.parse_args()
 
@@ -976,8 +1139,16 @@ if __name__ == '__main__':
     if args.vertical_plot:
         vertical_plot()
 
+    if args.subset:
+        subset_eval()
+
+    if args.subset_plot:
+        subset_plot()
+
     #create_legend()
-    create_bar_legend()
-    create_vertical_legend()
+    #create_bar_legend()
+    #create_vertical_legend()
+    #create_subset_single_legend()
+    #create_subset_multiple_legend()
 
 
