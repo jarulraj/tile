@@ -134,7 +134,7 @@ SUBSET_DIR = BASE_DIR + "/results/subset/"
 LAYOUTS = ("row", "column", "hybrid")
 OPERATORS = ("direct", "aggregate")
 
-SCALE_FACTOR = 1.0
+SCALE_FACTOR = 1000.0
 
 SELECTIVITY = (0.2, 0.4, 0.6, 0.8, 1.0)
 PROJECTIVITY = (0.1, 0.2, 0.3, 0.4, 0.5)
