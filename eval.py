@@ -144,7 +144,9 @@ ACCESS_NUM_GROUPS = (1, 2, 4, 8, 16)
 SUBSET_SINGLE_GROUP_EXPERIMENT = "1"
 SUBSET_MULTIPLE_GROUP_EXPERIMENT = "2"
 
-OP_PROJECTIVITY = (0.1, 1.0)
+OP_PROJECTIVITY = (0.01, 0.1, 1.0)
+OP_COLUMN_COUNT = 100
+OP_SELECTIVITY = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
 
 COLUMN_COUNTS = (50, 200)
 WRITE_RATIOS = (0, 0.1)
@@ -310,7 +312,7 @@ def create_subset_single_legend():
                      frameon=False, borderaxespad=0.0, handleheight=2, handlelength=3.5)
 
     figlegend.savefig('legend_subset_single.pdf')
-    
+
 def create_subset_multiple_legend():
     fig = pylab.figure()
     ax1 = fig.add_subplot(111)
@@ -338,7 +340,7 @@ def create_subset_multiple_legend():
                      frameon=False, borderaxespad=0.0, handleheight=2, handlelength=3.5)
 
     figlegend.savefig('legend_subset_multiple.pdf')
-        
+
 
 def create_legend():
     fig = pylab.figure()
@@ -527,7 +529,7 @@ def create_operator_line_chart(datasets):
     ax1 = fig.add_subplot(111)
 
     # X-AXIS
-    x_values = PROJECTIVITY
+    x_values = OP_SELECTIVITY
     N = len(x_values)
     x_labels = x_values
 
@@ -560,17 +562,18 @@ def create_operator_line_chart(datasets):
 
     YLIMIT = next_power_of_10(YLIMIT)
 
+    # X-AXIS
+    XAXIS_MIN = 0.05
+    XAXIS_MAX = 1.05
+    ax1.set_xlabel("Fraction of Tuples Selected", fontproperties=LABEL_FP)
+    ax1.set_xlim([XAXIS_MIN, XAXIS_MAX])
+    ax1.set_xticks(OP_SELECTIVITY)
+
     # Y-AXIS
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
     ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
     #ax1.set_yscale('log', basey=2)
-
-    # X-AXIS
-    XAXIS_MIN = 0.1
-    XAXIS_MAX = 1.1
-    ax1.set_xlabel("Fraction of Tuples Selected", fontproperties=LABEL_FP)
-    ax1.set_xlim([XAXIS_MIN, XAXIS_MAX])
 
     for label in ax1.get_yticklabels() :
         label.set_fontproperties(TICK_FP)
@@ -589,7 +592,7 @@ def create_subset_bar_chart(datasets):
 
     ind = np.arange(N)
     margin = 0.15
-    width = ((1.0 - 2 * margin) / N) 
+    width = ((1.0 - 2 * margin) / N)
     bars = [None] * len(SUBSET_RATIOS) * N
 
     for group in xrange(len(datasets)):
@@ -773,10 +776,10 @@ def vertical_plot():
             for tuples_per_tg in TUPLES_PER_TILEGROUP:
 
                 data_file = VERTICAL_DIR + "/" + str(tuples_per_tg) + "/" + str(column_count) + "/" + str(write_ratio) + "/" + "vertical.csv"
-    
+
                 dataset = loadDataFile(10, 2, data_file)
                 datasets.append(dataset)
-    
+
             fig = create_vertical_line_chart(datasets)
 
             if write_ratio == 0:
@@ -792,45 +795,37 @@ def vertical_plot():
             fileName = "vertical-" + table_type + "-" + write_mix + ".pdf"
 
             saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
-                
+
 
 # OPERATOR -- PLOT
 def operator_plot():
 
-    column_count_type = 0
-    for column_count in COLUMN_COUNTS:
-        column_count_type = column_count_type + 1
+    column_count = OP_COLUMN_COUNT
+    for write_ratio in WRITE_RATIOS:
 
-        for write_ratio in WRITE_RATIOS:
+        projectivity_type = 0
+        for projectivity in OP_PROJECTIVITY:
+            projectivity_type = projectivity_type + 1
+            print(projectivity)
+            datasets = []
 
-            projectivity_type = 0
-            for projectivity in OP_PROJECTIVITY:
-                projectivity_type = projectivity_type + 1
-                print(projectivity)
-                datasets = []
+            for layout in LAYOUTS:
+                if projectivity == 1.0: projectivity = 1
+                data_file = OPERATOR_DIR + "/" + layout + "/" + str(projectivity) + "/" + str(column_count) + "/" + str(write_ratio) + "/" + "operator.csv"
 
-                for layout in LAYOUTS:
-                    if projectivity == 1.0: projectivity = 1
-                    data_file = OPERATOR_DIR + "/" + layout + "/" + str(projectivity) + "/" + str(column_count) + "/" + str(write_ratio) + "/" + "operator.csv"
+                dataset = loadDataFile(10, 2, data_file)
+                datasets.append(dataset)
 
-                    dataset = loadDataFile(10, 2, data_file)
-                    datasets.append(dataset)
+            fig = create_operator_line_chart(datasets)
 
-                fig = create_operator_line_chart(datasets)
+            if write_ratio == 0:
+                write_mix = "rd"
+            else:
+                write_mix = "rw"
 
-                if write_ratio == 0:
-                    write_mix = "rd"
-                else:
-                    write_mix = "rw"
+            fileName = "operator-" + str(projectivity_type) + "-" + write_mix + ".pdf"
 
-                if column_count_type == 1:
-                    table_type = "narrow"
-                else:
-                    table_type = "wide"
-
-                fileName = "operator-" + str(projectivity_type) + "-" + table_type + "-" + write_mix + ".pdf"
-
-                saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
+            saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/1.5)
 
 
 # YCSB -- PLOT
@@ -853,7 +848,7 @@ def ycsb_plot():
 
 # SUBSET -- PLOT
 def subset_plot():
-    
+
     datasets = []
     for subset_ratio in SUBSET_RATIOS:
         data_file = SUBSET_DIR + "/" + SUBSET_SINGLE_GROUP_EXPERIMENT + "/" + str(subset_ratio) + "/" + "subset.csv"
@@ -954,7 +949,7 @@ def collect_stats(result_dir,
             if subset_experiment_type == SUBSET_SINGLE_GROUP_EXPERIMENT:
                 result_directory = result_dir + "/" + str(subset_experiment_type) + "/" + str(subset_ratio)
             elif subset_experiment_type == SUBSET_MULTIPLE_GROUP_EXPERIMENT:
-                result_directory = result_dir + "/" + str(subset_experiment_type) + "/" + str(access_num_group)                
+                result_directory = result_dir + "/" + str(subset_experiment_type) + "/" + str(access_num_group)
 
         if not os.path.exists(result_directory):
             os.makedirs(result_directory)
