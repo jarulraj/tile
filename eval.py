@@ -138,7 +138,7 @@ OPERATORS = ("direct", "aggregate")
 SCALE_FACTOR = 1000.0
 
 SELECTIVITY = (0.2, 0.4, 0.6, 0.8, 1.0)
-PROJECTIVITY = (0.1, 0.2, 0.3, 0.4, 0.5)
+PROJECTIVITY = (0.01, 0.1, 0.5, 1.0)
 SUBSET_RATIOS = (0.2, 0.4, 0.6, 0.8, 1)
 ACCESS_NUM_GROUPS = (1, 2, 4, 8, 16)
 
@@ -369,52 +369,55 @@ def create_legend():
     figlegend.savefig('legend.pdf')
 
 
-def create_projectivity_line_chart(datasets):
+def create_projectivity_bar_chart(datasets):
     fig = plot.figure()
     ax1 = fig.add_subplot(111)
 
-    # X-AXIS
     x_values = PROJECTIVITY
     N = len(x_values)
-    x_labels = x_values
+    x_labels = PROJECTIVITY
 
-    num_items = len(LAYOUTS);
+    layouts = ["NSM", "DSM", "FSM"]
+
     ind = np.arange(N)
-    idx = 0
+    margin = 0.15
+    width = ((1.0 - 2 * margin) / N)
+    bars = [None] * len(layouts) * N
 
-    YLIMIT = 100
+    print(datasets)
 
-    # GROUP
-    for group_index, group in enumerate(LAYOUTS):
-        group_data = []
+    for group in xrange(len(datasets)):
+        # GROUP
+        latencies = []
 
-        # LINE
-        for line_index, line in enumerate(x_values):
-            group_data.append(datasets[group_index][line_index][1])
+        for line in  xrange(len(datasets[group])):
+            for col in  xrange(len(datasets[group][line])):
+                if col == 1:
+                    latencies.append(datasets[group][line][col])
 
-        LOG.info("%s group_data = %s ", group, str(group_data))
+        LOG.info("%s group_data = %s ", layouts, str(latencies))
 
-        ax1.plot(x_values, group_data, color=OPT_LINE_COLORS[idx], linewidth=OPT_LINE_WIDTH,
-                 marker=OPT_MARKERS[idx], markersize=OPT_MARKER_SIZE, label=str(group))
+        bars[group] = ax1.bar(ind + margin + (group * width), latencies, width,
+                              color=OPT_COLORS[group],
+                              hatch=OPT_PATTERNS[group*2],
+                              linewidth=BAR_LINEWIDTH)
 
-        idx = idx + 1
 
     # GRID
     axes = ax1.get_axes()
+    #axes.set_ylim(0.01, 1000000)
     makeGrid(ax1)
 
     # Y-AXIS
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
     ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
-    #ax1.set_yscale('log', basey=2)
     #ax1.set_ylim([YAXIS_MIN, YAXIS_MAX])
 
     # X-AXIS
-    XAXIS_MIN = 0.1
-    XAXIS_MAX = 1.1
     ax1.set_xlabel("Fraction of Attributes Projected", fontproperties=LABEL_FP)
-    ax1.set_xlim([XAXIS_MIN, XAXIS_MAX])
+    ax1.set_xticklabels(x_labels)
+    ax1.set_xticks(ind + 0.5)
 
     for label in ax1.get_yticklabels() :
         label.set_fontproperties(TICK_FP)
@@ -710,10 +713,10 @@ def projectivity_plot():
                 for layout in LAYOUTS:
                     data_file = PROJECTIVITY_DIR + "/" + layout + "/" + operator + "/" + str(column_count) + "/" + str(write_ratio) + "/" + "projectivity.csv"
 
-                    dataset = loadDataFile(10, 2, data_file)
+                    dataset = loadDataFile(4, 2, data_file)
                     datasets.append(dataset)
 
-                fig = create_projectivity_line_chart(datasets)
+                fig = create_projectivity_bar_chart(datasets)
 
                 if write_ratio == 0:
                     write_mix = "rd"
@@ -939,6 +942,8 @@ def collect_stats(result_dir,
             operator = "direct"
         elif(operator == "2"):
             operator = "aggregate"
+        elif(operator == "3"):
+            operator = "arithmetic"
 
         # MAKE RESULTS FILE DIR
         if category == PROJECTIVITY_EXPERIMENT or category == SELECTIVITY_EXPERIMENT:
