@@ -82,8 +82,8 @@ OPT_PATTERNS = ([ "////", "////", "o", "o", "\\\\" , "\\\\" , "//////", "//////"
 
 OPT_LABEL_WEIGHT = 'bold'
 OPT_LINE_COLORS = COLOR_MAP
-OPT_LINE_WIDTH = 5.0
-OPT_MARKER_SIZE = 8.0
+OPT_LINE_WIDTH = 6.0
+OPT_MARKER_SIZE = 10.0
 DATA_LABELS = []
 
 OPT_STACK_COLORS = ('#AFAFAF', '#F15854', '#5DA5DA', '#60BD68',  '#B276B2', '#DECF3F', '#F17CB0', '#B2912F', '#FAA43A')
@@ -98,10 +98,11 @@ LEGEND_FONT_SIZE = 20
 AXIS_LINEWIDTH = 1.3
 BAR_LINEWIDTH = 1.2
 
+# SET TYPE1 FONTS
 
 matplotlib.rcParams['ps.useafm'] = True
 matplotlib.rcParams['pdf.use14corefonts'] = True
-matplotlib.rcParams['text.usetex'] = True
+#matplotlib.rcParams['text.usetex'] = True
 #matplotlib.rcParams['text.latex.preamble']=[r'\usepackage{euler}']
 
 LABEL_FP = FontProperties(family=OPT_FONT_NAME, style='normal', size=LABEL_FONT_SIZE, weight='bold')
@@ -109,7 +110,7 @@ TICK_FP = FontProperties(family=OPT_FONT_NAME, style='normal', size=TICK_FONT_SI
 TINY_FP = FontProperties(family=OPT_FONT_NAME, style='normal', size=TINY_FONT_SIZE)
 LEGEND_FP = FontProperties(family=OPT_FONT_NAME, style='normal', size=LEGEND_FONT_SIZE, weight='bold')
 
-YAXIS_TICKS = 5
+YAXIS_TICKS = 3
 YAXIS_ROUND = 1000.0
 
 ###################################################################################
@@ -249,7 +250,7 @@ def create_bar_legend():
                               hatch=OPT_PATTERNS[group * 2],
                               linewidth=BAR_LINEWIDTH)
 
-    LABELS = ["Row", "Column", "Hybrid"]
+    LABELS = ["NSM", "DSM", "FSM"]
 
     # LEGEND
     figlegend.legend(bars, LABELS, prop=LABEL_FP,
@@ -350,7 +351,7 @@ def create_legend():
     idx = 0
     lines = [None] * len(LAYOUTS)
 
-    layouts = ("Row", "Column", "Hybrid")
+    layouts = ["NSM", "DSM", "FSM"]
 
     for group in xrange(len(LAYOUTS)):
         data = [1]
@@ -567,7 +568,8 @@ def create_operator_line_chart(datasets):
     XAXIS_MAX = 1.05
     ax1.set_xlabel("Fraction of Tuples Selected", fontproperties=LABEL_FP)
     ax1.set_xlim([XAXIS_MIN, XAXIS_MAX])
-    ax1.set_xticks(OP_SELECTIVITY)
+    x_values = (0.2, 0.4, 0.6, 0.8, 1.0)
+    ax1.set_xticks(x_values)
 
     # Y-AXIS
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
@@ -825,7 +827,7 @@ def operator_plot():
 
             fileName = "operator-" + str(projectivity_type) + "-" + write_mix + ".pdf"
 
-            saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/1.5)
+            saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
 
 
 # YCSB -- PLOT
