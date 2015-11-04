@@ -131,11 +131,12 @@ OPERATOR_DIR = BASE_DIR + "/results/operator/"
 YCSB_DIR = BASE_DIR + "/results/ycsb/"
 VERTICAL_DIR = BASE_DIR + "/results/vertical/"
 SUBSET_DIR = BASE_DIR + "/results/subset/"
+ADAPT_DIR = BASE_DIR + "/results/adapt/"
 
 LAYOUTS = ("row", "column", "hybrid")
 OPERATORS = ("direct", "aggregate")
 
-SCALE_FACTOR = 1000.0
+SCALE_FACTOR = 100.0
 
 SELECTIVITY = (0.2, 0.4, 0.6, 0.8, 1.0)
 PROJECTIVITY = (0.01, 0.1, 0.5, 1.0)
@@ -156,11 +157,16 @@ NUM_GROUPS = 5
 
 TRANSACTION_COUNT = 3
 
+NUM_ADAPT_TESTS = 10
+REPEAT_ADAPT_TEST = 10
+QUERY_COUNT = NUM_ADAPT_TESTS * REPEAT_ADAPT_TEST
+
 PROJECTIVITY_EXPERIMENT = 1
 SELECTIVITY_EXPERIMENT = 2
 OPERATOR_EXPERIMENT = 3
 VERTICAL_EXPERIMENT= 4
 SUBSET_EXPERIMENT= 5
+ADAPT_EXPERIMENT = 6
 
 YCSB_EXPERIMENT = 1
 
@@ -693,6 +699,60 @@ def create_ycsb_bar_chart(datasets):
 
     return (fig)
 
+def create_adapt_line_chart(datasets):
+    fig = plot.figure()
+    ax1 = fig.add_subplot(111)
+
+    # X-AXIS
+    x_values = list(xrange(1, QUERY_COUNT + 1))
+    N = len(x_values)
+    x_labels = x_values
+
+    num_items = len(LAYOUTS);
+    ind = np.arange(N)
+    idx = 0
+
+    ADAPT_OPT_LINE_WIDTH = 3.0
+    ADAPT_OPT_MARKER_SIZE = 5.0
+
+    # GROUP
+    for group_index, group in enumerate(LAYOUTS):
+        group_data = []
+
+        # LINE
+        for line_index, line in enumerate(x_values):
+            group_data.append(datasets[group_index][line_index][1])
+
+        LOG.info("%s group_data = %s ", group, str(group_data))
+
+        ax1.plot(x_values, group_data, color=OPT_LINE_COLORS[idx], linewidth=ADAPT_OPT_LINE_WIDTH,
+                 marker=OPT_MARKERS[idx], markersize=ADAPT_OPT_MARKER_SIZE, label=str(group))
+
+        idx = idx + 1
+
+    # GRID
+    axes = ax1.get_axes()
+    makeGrid(ax1)
+
+    # Y-AXIS
+    ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
+    ax1.minorticks_off()
+    ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
+    #ax1.set_yscale('log', basey=2)
+
+    # X-AXIS
+    XAXIS_MIN = 0.5
+    XAXIS_MAX = QUERY_COUNT + 1.5    
+    ax1.set_xlabel("Query Sequence", fontproperties=LABEL_FP)
+    ax1.set_xlim([XAXIS_MIN, XAXIS_MAX])
+
+    for label in ax1.get_yticklabels() :
+        label.set_fontproperties(TICK_FP)
+    for label in ax1.get_xticklabels() :
+        label.set_fontproperties(TICK_FP)
+
+    return (fig)
+
 ###################################################################################
 # PLOT HELPERS
 ###################################################################################
@@ -880,6 +940,23 @@ def subset_plot():
 
     saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
 
+# ADAPT -- PLOT
+def adapt_plot():
+
+    datasets = []
+
+    for layout in LAYOUTS:
+        data_file = ADAPT_DIR + "/" + layout + "/" + "adapt.csv"
+
+        dataset = loadDataFile(QUERY_COUNT, 2, data_file)
+        datasets.append(dataset)
+
+    fig = create_adapt_line_chart(datasets)
+
+    fileName = "adapt.pdf"
+
+    saveGraph(fig, fileName, width=OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
+
 ###################################################################################
 # EVAL HELPERS
 ###################################################################################
@@ -929,7 +1006,8 @@ def collect_stats(result_dir,
         access_num_group = data[7]
         subset_ratio = data[8]
         tuples_per_tg = data[9]
-        stat = data[10]
+        txn_itr = data[10]
+        stat = data[11]
 
         if(layout == "0"):
             layout = "row"
@@ -957,6 +1035,8 @@ def collect_stats(result_dir,
                 result_directory = result_dir + "/" + str(subset_experiment_type) + "/" + str(subset_ratio)
             elif subset_experiment_type == SUBSET_MULTIPLE_GROUP_EXPERIMENT:
                 result_directory = result_dir + "/" + str(subset_experiment_type) + "/" + str(access_num_group)
+        elif category == ADAPT_EXPERIMENT:
+            result_directory = result_dir + "/" + layout
 
         if not os.path.exists(result_directory):
             os.makedirs(result_directory)
@@ -969,6 +1049,8 @@ def collect_stats(result_dir,
             result_file.write(str(projectivity) + " , " + str(stat) + "\n")
         elif category == SELECTIVITY_EXPERIMENT or category == OPERATOR_EXPERIMENT or category == VERTICAL_EXPERIMENT or category == SUBSET_EXPERIMENT:
             result_file.write(str(selectivity) + " , " + str(stat) + "\n")
+        elif category == ADAPT_EXPERIMENT:            
+            result_file.write(str(txn_itr) + " , " + str(stat) + "\n")            
 
         result_file.close()
 
@@ -1088,6 +1170,19 @@ def subset_eval():
     # COLLECT STATS
     collect_stats(SUBSET_DIR, "subset.csv", SUBSET_EXPERIMENT)
 
+# ADAPT -- EVAL
+def adapt_eval():
+
+    # CLEAN UP RESULT DIR
+    clean_up_dir(ADAPT_DIR)
+
+    # RUN EXPERIMENT
+    run_experiment(HYADAPT, SCALE_FACTOR,
+                   TRANSACTION_COUNT, ADAPT_EXPERIMENT)
+
+    # COLLECT STATS
+    collect_stats(ADAPT_DIR, "adapt.csv", ADAPT_EXPERIMENT)
+
 ###################################################################################
 # MAIN
 ###################################################################################
@@ -1101,6 +1196,7 @@ if __name__ == '__main__':
     parser.add_argument("-y", "--ycsb", help='eval ycsb', action='store_true')
     parser.add_argument("-v", "--vertical", help='eval vertical', action='store_true')
     parser.add_argument("-u", "--subset", help='eval subset', action='store_true')
+    parser.add_argument("-z", "--adapt", help='eval adapt', action='store_true')
 
     parser.add_argument("-a", "--projectivity_plot", help='plot projectivity', action='store_true')
     parser.add_argument("-b", "--selectivity_plot", help='plot selectivity', action='store_true')
@@ -1108,6 +1204,7 @@ if __name__ == '__main__':
     parser.add_argument("-d", "--ycsb_plot", help='plot ycsb', action='store_true')
     parser.add_argument("-e", "--vertical_plot", help='plot vertical', action='store_true')
     parser.add_argument("-f", "--subset_plot", help='plot subset', action='store_true')
+    parser.add_argument("-g", "--adapt_plot", help='plot adapt', action='store_true')
 
     args = parser.parse_args()
 
@@ -1146,6 +1243,12 @@ if __name__ == '__main__':
 
     if args.subset_plot:
         subset_plot()
+
+    if args.adapt:
+        adapt_eval()
+
+    if args.adapt_plot:
+        adapt_plot()
 
     #create_legend()
     #create_bar_legend()
