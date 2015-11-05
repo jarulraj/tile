@@ -136,7 +136,7 @@ ADAPT_DIR = BASE_DIR + "/results/adapt/"
 LAYOUTS = ("row", "column", "hybrid")
 OPERATORS = ("direct", "aggregate")
 
-SCALE_FACTOR = 100.0
+SCALE_FACTOR = 1000.0
 
 SELECTIVITY = (0.2, 0.4, 0.6, 0.8, 1.0)
 PROJECTIVITY = (0.01, 0.1, 0.5, 1.0)
@@ -158,7 +158,7 @@ NUM_GROUPS = 5
 TRANSACTION_COUNT = 3
 
 NUM_ADAPT_TESTS = 10
-REPEAT_ADAPT_TEST = 10
+REPEAT_ADAPT_TEST = 20
 QUERY_COUNT = NUM_ADAPT_TESTS * REPEAT_ADAPT_TEST
 
 PROJECTIVITY_EXPERIMENT = 1
@@ -738,13 +738,12 @@ def create_adapt_line_chart(datasets):
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
     ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
-    #ax1.set_yscale('log', basey=2)
+    #ax1.set_yscale('log', basey=10)
 
     # X-AXIS
-    XAXIS_MIN = 0.5
-    XAXIS_MAX = QUERY_COUNT + 1.5    
     ax1.set_xlabel("Query Sequence", fontproperties=LABEL_FP)
-    ax1.set_xlim([XAXIS_MIN, XAXIS_MAX])
+    major_ticks = np.arange(0, QUERY_COUNT + 1, 20)
+    ax1.set_xticks(major_ticks)
 
     for label in ax1.get_yticklabels() :
         label.set_fontproperties(TICK_FP)
@@ -955,7 +954,7 @@ def adapt_plot():
 
     fileName = "adapt.pdf"
 
-    saveGraph(fig, fileName, width=OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
+    saveGraph(fig, fileName, width=OPT_GRAPH_WIDTH*2, height=OPT_GRAPH_HEIGHT/2.0)
 
 ###################################################################################
 # EVAL HELPERS
