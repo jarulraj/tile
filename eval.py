@@ -136,7 +136,7 @@ ADAPT_DIR = BASE_DIR + "/results/adapt/"
 LAYOUTS = ("row", "column", "hybrid")
 OPERATORS = ("direct", "aggregate")
 
-SCALE_FACTOR = 1000.0
+SCALE_FACTOR = 100.0
 
 SELECTIVITY = (0.2, 0.4, 0.6, 0.8, 1.0)
 PROJECTIVITY = (0.01, 0.1, 0.5, 1.0)
