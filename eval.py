@@ -156,11 +156,15 @@ WRITE_RATIOS = (0, 0.1)
 TUPLES_PER_TILEGROUP = (10, 100, 1000, 10000)
 NUM_GROUPS = 5
 
+THETAS = (0.1, 0.5, 0.9)
+
 TRANSACTION_COUNT = 3
 
 NUM_ADAPT_TESTS = 4
 REPEAT_ADAPT_TEST = 50
 QUERY_COUNT = NUM_ADAPT_TESTS * REPEAT_ADAPT_TEST
+
+THETA_QUERY_COUNT = 60
 
 PROJECTIVITY_EXPERIMENT = 1
 SELECTIVITY_EXPERIMENT = 2
@@ -754,6 +758,59 @@ def create_adapt_line_chart(datasets):
 
     return (fig)
 
+def create_theta_line_chart(datasets):
+    fig = plot.figure()
+    ax1 = fig.add_subplot(111)
+
+    # X-AXIS
+    x_values = list(xrange(1, THETA_QUERY_COUNT + 1))
+    N = len(x_values)
+    x_labels = x_values
+
+    num_items = len(LAYOUTS);
+    ind = np.arange(N)
+    idx = 0
+
+    ADAPT_OPT_LINE_WIDTH = 3.0
+    ADAPT_OPT_MARKER_SIZE = 5.0
+
+    # GROUP
+    for group_index, group in enumerate(LAYOUTS):
+        group_data = []
+
+        # LINE
+        for line_index, line in enumerate(x_values):
+            group_data.append(datasets[group_index][line_index][1])
+
+        LOG.info("%s group_data = %s ", group, str(group_data))
+
+        ax1.plot(x_values, group_data, color=OPT_LINE_COLORS[idx], linewidth=ADAPT_OPT_LINE_WIDTH,
+                 marker=OPT_MARKERS[idx], markersize=ADAPT_OPT_MARKER_SIZE, label=str(group))
+
+        idx = idx + 1
+
+    # GRID
+    axes = ax1.get_axes()
+    makeGrid(ax1)
+
+    # Y-AXIS
+    ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
+    ax1.minorticks_off()
+    ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
+    ax1.set_yscale('log', basey=10)
+
+    # X-AXIS
+    ax1.set_xlabel("Query Sequence", fontproperties=LABEL_FP)
+    major_ticks = np.arange(0, THETA_QUERY_COUNT + 1, 20)
+    ax1.set_xticks(major_ticks)
+
+    for label in ax1.get_yticklabels() :
+        label.set_fontproperties(TICK_FP)
+    for label in ax1.get_xticklabels() :
+        label.set_fontproperties(TICK_FP)
+
+    return (fig)
+
 ###################################################################################
 # PLOT HELPERS
 ###################################################################################
@@ -956,7 +1013,24 @@ def adapt_plot():
 
     fileName = "adapt.pdf"
 
-    saveGraph(fig, fileName, width=OPT_GRAPH_WIDTH*2, height=OPT_GRAPH_HEIGHT)
+    saveGraph(fig, fileName, width=OPT_GRAPH_WIDTH*3, height=OPT_GRAPH_HEIGHT)
+
+# THETA -- PLOT
+def theta_plot():
+
+    datasets = []
+
+    for theta in THETAS:
+        data_file = THETA_DIR + "/" + str(theta) + "/" + "theta.csv"
+
+        dataset = loadDataFile(THETA_QUERY_COUNT, 2, data_file)
+        datasets.append(dataset)
+
+    fig = create_theta_line_chart(datasets)
+
+    fileName = "theta.pdf"
+
+    saveGraph(fig, fileName, width=OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
 
 ###################################################################################
 # EVAL HELPERS
@@ -1186,7 +1260,7 @@ def adapt_eval():
 
     # COLLECT STATS
     collect_stats(ADAPT_DIR, "adapt.csv", ADAPT_EXPERIMENT)
-    
+
 # THETA -- EVAL
 def theta_eval():
 
