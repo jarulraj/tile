@@ -132,7 +132,6 @@ YCSB_DIR = BASE_DIR + "/results/ycsb/"
 VERTICAL_DIR = BASE_DIR + "/results/vertical/"
 SUBSET_DIR = BASE_DIR + "/results/subset/"
 ADAPT_DIR = BASE_DIR + "/results/adapt/"
-THETA_DIR = BASE_DIR + "/results/theta/"
 
 LAYOUTS = ("row", "column", "hybrid")
 OPERATORS = ("direct", "aggregate")
@@ -156,15 +155,13 @@ WRITE_RATIOS = (0, 0.1)
 TUPLES_PER_TILEGROUP = (10, 100, 1000, 10000)
 NUM_GROUPS = 5
 
-THETAS = (0.1, 0.5, 0.9)
+THETAS = (0, 0.5)
 
 TRANSACTION_COUNT = 3
 
-NUM_ADAPT_TESTS = 4
-REPEAT_ADAPT_TEST = 50
+NUM_ADAPT_TESTS = 12
+REPEAT_ADAPT_TEST = 25
 QUERY_COUNT = NUM_ADAPT_TESTS * REPEAT_ADAPT_TEST
-
-THETA_QUERY_COUNT = 60
 
 PROJECTIVITY_EXPERIMENT = 1
 SELECTIVITY_EXPERIMENT = 2
@@ -172,7 +169,6 @@ OPERATOR_EXPERIMENT = 3
 VERTICAL_EXPERIMENT= 4
 SUBSET_EXPERIMENT= 5
 ADAPT_EXPERIMENT = 6
-THETA_EXPERIMENT = 7
 
 YCSB_EXPERIMENT = 1
 
@@ -744,64 +740,11 @@ def create_adapt_line_chart(datasets):
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
     ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
-    ax1.set_yscale('log', basey=10)
+    #ax1.set_yscale('log', basey=10)
 
     # X-AXIS
     ax1.set_xlabel("Query Sequence", fontproperties=LABEL_FP)
     major_ticks = np.arange(0, QUERY_COUNT + 1, 20)
-    ax1.set_xticks(major_ticks)
-
-    for label in ax1.get_yticklabels() :
-        label.set_fontproperties(TICK_FP)
-    for label in ax1.get_xticklabels() :
-        label.set_fontproperties(TICK_FP)
-
-    return (fig)
-
-def create_theta_line_chart(datasets):
-    fig = plot.figure()
-    ax1 = fig.add_subplot(111)
-
-    # X-AXIS
-    x_values = list(xrange(1, THETA_QUERY_COUNT + 1))
-    N = len(x_values)
-    x_labels = x_values
-
-    num_items = len(LAYOUTS);
-    ind = np.arange(N)
-    idx = 0
-
-    ADAPT_OPT_LINE_WIDTH = 3.0
-    ADAPT_OPT_MARKER_SIZE = 5.0
-
-    # GROUP
-    for group_index, group in enumerate(LAYOUTS):
-        group_data = []
-
-        # LINE
-        for line_index, line in enumerate(x_values):
-            group_data.append(datasets[group_index][line_index][1])
-
-        LOG.info("%s group_data = %s ", group, str(group_data))
-
-        ax1.plot(x_values, group_data, color=OPT_LINE_COLORS[idx], linewidth=ADAPT_OPT_LINE_WIDTH,
-                 marker=OPT_MARKERS[idx], markersize=ADAPT_OPT_MARKER_SIZE, label=str(group))
-
-        idx = idx + 1
-
-    # GRID
-    axes = ax1.get_axes()
-    makeGrid(ax1)
-
-    # Y-AXIS
-    ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
-    ax1.minorticks_off()
-    ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
-    ax1.set_yscale('log', basey=10)
-
-    # X-AXIS
-    ax1.set_xlabel("Query Sequence", fontproperties=LABEL_FP)
-    major_ticks = np.arange(0, THETA_QUERY_COUNT + 1, 20)
     ax1.set_xticks(major_ticks)
 
     for label in ax1.get_yticklabels() :
@@ -1002,35 +945,19 @@ def subset_plot():
 def adapt_plot():
 
     datasets = []
-
-    for layout in LAYOUTS:
-        data_file = ADAPT_DIR + "/" + layout + "/" + "adapt.csv"
-
-        dataset = loadDataFile(QUERY_COUNT, 2, data_file)
-        datasets.append(dataset)
-
-    fig = create_adapt_line_chart(datasets)
-
-    fileName = "adapt.pdf"
-
-    saveGraph(fig, fileName, width=OPT_GRAPH_WIDTH*3, height=OPT_GRAPH_HEIGHT)
-
-# THETA -- PLOT
-def theta_plot():
-
-    datasets = []
-
     for theta in THETAS:
-        data_file = THETA_DIR + "/" + str(theta) + "/" + "theta.csv"
+        
+        for layout in LAYOUTS:
+            data_file = ADAPT_DIR + "/" + str(theta) + "/" + layout + "/" + "adapt.csv"
+    
+            dataset = loadDataFile(QUERY_COUNT, 2, data_file)
+            datasets.append(dataset)
 
-        dataset = loadDataFile(THETA_QUERY_COUNT, 2, data_file)
-        datasets.append(dataset)
+        fig = create_adapt_line_chart(datasets)
+    
+        fileName = "adapt-" + str(theta) + ".pdf"
 
-    fig = create_theta_line_chart(datasets)
-
-    fileName = "theta.pdf"
-
-    saveGraph(fig, fileName, width=OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
+        saveGraph(fig, fileName, width=OPT_GRAPH_WIDTH*3, height=OPT_GRAPH_HEIGHT)
 
 ###################################################################################
 # EVAL HELPERS
@@ -1112,9 +1039,7 @@ def collect_stats(result_dir,
             elif subset_experiment_type == SUBSET_MULTIPLE_GROUP_EXPERIMENT:
                 result_directory = result_dir + "/" + str(subset_experiment_type) + "/" + str(access_num_group)
         elif category == ADAPT_EXPERIMENT:
-            result_directory = result_dir + "/" + layout
-        elif category == THETA_EXPERIMENT:
-            result_directory = result_dir + "/" + theta
+            result_directory = result_dir + "/" + str(theta) + "/" + layout 
 
         if not os.path.exists(result_directory):
             os.makedirs(result_directory)
@@ -1127,7 +1052,7 @@ def collect_stats(result_dir,
             result_file.write(str(projectivity) + " , " + str(stat) + "\n")
         elif category == SELECTIVITY_EXPERIMENT or category == OPERATOR_EXPERIMENT or category == VERTICAL_EXPERIMENT or category == SUBSET_EXPERIMENT:
             result_file.write(str(selectivity) + " , " + str(stat) + "\n")
-        elif category == ADAPT_EXPERIMENT or category == THETA_EXPERIMENT:
+        elif category == ADAPT_EXPERIMENT:
             result_file.write(str(txn_itr) + " , " + str(stat) + "\n")
 
         result_file.close()
@@ -1288,7 +1213,6 @@ if __name__ == '__main__':
     parser.add_argument("-v", "--vertical", help='eval vertical', action='store_true')
     parser.add_argument("-u", "--subset", help='eval subset', action='store_true')
     parser.add_argument("-z", "--adapt", help='eval adapt', action='store_true')
-    parser.add_argument("-t", "--theta", help='eval theta', action='store_true')
 
     parser.add_argument("-a", "--projectivity_plot", help='plot projectivity', action='store_true')
     parser.add_argument("-b", "--selectivity_plot", help='plot selectivity', action='store_true')
@@ -1297,7 +1221,6 @@ if __name__ == '__main__':
     parser.add_argument("-e", "--vertical_plot", help='plot vertical', action='store_true')
     parser.add_argument("-f", "--subset_plot", help='plot subset', action='store_true')
     parser.add_argument("-g", "--adapt_plot", help='plot adapt', action='store_true')
-    parser.add_argument("-i", "--theta_plot", help='plot theta', action='store_true')
 
     args = parser.parse_args()
 
@@ -1342,12 +1265,6 @@ if __name__ == '__main__':
 
     if args.adapt_plot:
         adapt_plot()
-
-    if args.theta:
-        theta_eval()
-
-    if args.theta_plot:
-        theta_plot()
 
     #create_legend()
     #create_bar_legend()
