@@ -132,6 +132,7 @@ YCSB_DIR = BASE_DIR + "/results/ycsb/"
 VERTICAL_DIR = BASE_DIR + "/results/vertical/"
 SUBSET_DIR = BASE_DIR + "/results/subset/"
 ADAPT_DIR = BASE_DIR + "/results/adapt/"
+THETA_DIR = BASE_DIR + "/results/theta/"
 
 LAYOUTS = ("row", "column", "hybrid")
 OPERATORS = ("direct", "aggregate")
@@ -157,8 +158,8 @@ NUM_GROUPS = 5
 
 TRANSACTION_COUNT = 3
 
-NUM_ADAPT_TESTS = 10
-REPEAT_ADAPT_TEST = 20
+NUM_ADAPT_TESTS = 4
+REPEAT_ADAPT_TEST = 50
 QUERY_COUNT = NUM_ADAPT_TESTS * REPEAT_ADAPT_TEST
 
 PROJECTIVITY_EXPERIMENT = 1
@@ -167,6 +168,7 @@ OPERATOR_EXPERIMENT = 3
 VERTICAL_EXPERIMENT= 4
 SUBSET_EXPERIMENT= 5
 ADAPT_EXPERIMENT = 6
+THETA_EXPERIMENT = 7
 
 YCSB_EXPERIMENT = 1
 
@@ -738,7 +740,7 @@ def create_adapt_line_chart(datasets):
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
     ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
-    #ax1.set_yscale('log', basey=10)
+    ax1.set_yscale('log', basey=10)
 
     # X-AXIS
     ax1.set_xlabel("Query Sequence", fontproperties=LABEL_FP)
@@ -954,7 +956,7 @@ def adapt_plot():
 
     fileName = "adapt.pdf"
 
-    saveGraph(fig, fileName, width=OPT_GRAPH_WIDTH*2, height=OPT_GRAPH_HEIGHT/2.0)
+    saveGraph(fig, fileName, width=OPT_GRAPH_WIDTH*2, height=OPT_GRAPH_HEIGHT)
 
 ###################################################################################
 # EVAL HELPERS
@@ -1006,7 +1008,8 @@ def collect_stats(result_dir,
         subset_ratio = data[8]
         tuples_per_tg = data[9]
         txn_itr = data[10]
-        stat = data[11]
+        theta = data[11]
+        stat = data[12]
 
         if(layout == "0"):
             layout = "row"
@@ -1036,6 +1039,8 @@ def collect_stats(result_dir,
                 result_directory = result_dir + "/" + str(subset_experiment_type) + "/" + str(access_num_group)
         elif category == ADAPT_EXPERIMENT:
             result_directory = result_dir + "/" + layout
+        elif category == THETA_EXPERIMENT:
+            result_directory = result_dir + "/" + theta
 
         if not os.path.exists(result_directory):
             os.makedirs(result_directory)
@@ -1048,8 +1053,8 @@ def collect_stats(result_dir,
             result_file.write(str(projectivity) + " , " + str(stat) + "\n")
         elif category == SELECTIVITY_EXPERIMENT or category == OPERATOR_EXPERIMENT or category == VERTICAL_EXPERIMENT or category == SUBSET_EXPERIMENT:
             result_file.write(str(selectivity) + " , " + str(stat) + "\n")
-        elif category == ADAPT_EXPERIMENT:            
-            result_file.write(str(txn_itr) + " , " + str(stat) + "\n")            
+        elif category == ADAPT_EXPERIMENT or category == THETA_EXPERIMENT:
+            result_file.write(str(txn_itr) + " , " + str(stat) + "\n")
 
         result_file.close()
 
@@ -1181,6 +1186,19 @@ def adapt_eval():
 
     # COLLECT STATS
     collect_stats(ADAPT_DIR, "adapt.csv", ADAPT_EXPERIMENT)
+    
+# THETA -- EVAL
+def theta_eval():
+
+    # CLEAN UP RESULT DIR
+    clean_up_dir(THETA_DIR)
+
+    # RUN EXPERIMENT
+    run_experiment(HYADAPT, SCALE_FACTOR,
+                   TRANSACTION_COUNT, THETA_EXPERIMENT)
+
+    # COLLECT STATS
+    collect_stats(THETA_DIR, "theta.csv", THETA_EXPERIMENT)
 
 ###################################################################################
 # MAIN
@@ -1196,6 +1214,7 @@ if __name__ == '__main__':
     parser.add_argument("-v", "--vertical", help='eval vertical', action='store_true')
     parser.add_argument("-u", "--subset", help='eval subset', action='store_true')
     parser.add_argument("-z", "--adapt", help='eval adapt', action='store_true')
+    parser.add_argument("-t", "--theta", help='eval theta', action='store_true')
 
     parser.add_argument("-a", "--projectivity_plot", help='plot projectivity', action='store_true')
     parser.add_argument("-b", "--selectivity_plot", help='plot selectivity', action='store_true')
@@ -1204,6 +1223,7 @@ if __name__ == '__main__':
     parser.add_argument("-e", "--vertical_plot", help='plot vertical', action='store_true')
     parser.add_argument("-f", "--subset_plot", help='plot subset', action='store_true')
     parser.add_argument("-g", "--adapt_plot", help='plot adapt', action='store_true')
+    parser.add_argument("-i", "--theta_plot", help='plot theta', action='store_true')
 
     args = parser.parse_args()
 
@@ -1248,6 +1268,12 @@ if __name__ == '__main__':
 
     if args.adapt_plot:
         adapt_plot()
+
+    if args.theta:
+        theta_eval()
+
+    if args.theta_plot:
+        theta_plot()
 
     #create_legend()
     #create_bar_legend()
