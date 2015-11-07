@@ -132,6 +132,7 @@ YCSB_DIR = BASE_DIR + "/results/ycsb/"
 VERTICAL_DIR = BASE_DIR + "/results/vertical/"
 SUBSET_DIR = BASE_DIR + "/results/subset/"
 ADAPT_DIR = BASE_DIR + "/results/adapt/"
+WEIGHT_DIR = BASE_DIR + "/results/weight/"
 
 LAYOUTS = ("row", "column", "hybrid")
 OPERATORS = ("direct", "aggregate")
@@ -155,7 +156,7 @@ WRITE_RATIOS = (0, 0.1)
 TUPLES_PER_TILEGROUP = (10, 100, 1000, 10000)
 NUM_GROUPS = 5
 
-THETAS = (0, 0.9)
+THETAS = (0, 0.5)
 
 TRANSACTION_COUNT = 3
 
@@ -163,12 +164,18 @@ NUM_ADAPT_TESTS = 12
 REPEAT_ADAPT_TEST = 25
 QUERY_COUNT = NUM_ADAPT_TESTS * REPEAT_ADAPT_TEST
 
+SAMPLE_WEIGHTS = (0.001, 0.01, 0.1)
+NUM_WEIGHT_TEST = 10
+REPEAT_WEIGHT_TEST = 50
+WEIGHT_QUERY_COUNT = NUM_WEIGHT_TEST * REPEAT_WEIGHT_TEST
+
 PROJECTIVITY_EXPERIMENT = 1
 SELECTIVITY_EXPERIMENT = 2
 OPERATOR_EXPERIMENT = 3
 VERTICAL_EXPERIMENT= 4
 SUBSET_EXPERIMENT= 5
 ADAPT_EXPERIMENT = 6
+WEIGHT_EXPERIMENT = 7
 
 YCSB_EXPERIMENT = 1
 
@@ -744,13 +751,84 @@ def create_adapt_line_chart(datasets):
 
     # X-AXIS
     ax1.set_xlabel("Query Sequence", fontproperties=LABEL_FP)
-    major_ticks = np.arange(0, QUERY_COUNT + 1, 20)
+    major_ticks = np.arange(0, QUERY_COUNT + 1, REPEAT_ADAPT_TEST)
     ax1.set_xticks(major_ticks)
-
+    
+    for major_tick in major_ticks[1:-1]:
+        ax1.axvline(major_tick, color='0.5', linestyle='dashed', linewidth=ADAPT_OPT_LINE_WIDTH)    
+    
+    # LABELS
+    y_mark = 0.9
+    x_mark_count = 1.0/NUM_ADAPT_TESTS
+    x_mark_offset = x_mark_count/2 - x_mark_count/4
+    x_marks = np.arange(0, 1, x_mark_count)
+    
+    ADAPT_LABELS = (["Select-L", "Update", "Select-L", "Update",
+                     "Select-H", "Update", "Select-H", "Update",
+                     "Select-L", "Update", "Select-L", "Update"])
+    
+    for idx, x_mark in enumerate(x_marks):
+            ax1.text(x_mark + x_mark_offset, 
+                     y_mark, 
+                     ADAPT_LABELS[idx], 
+                     transform=ax1.transAxes,
+                     bbox=dict(facecolor='skyblue', alpha=0.5))
+        
     for label in ax1.get_yticklabels() :
         label.set_fontproperties(TICK_FP)
     for label in ax1.get_xticklabels() :
         label.set_fontproperties(TICK_FP)
+
+    return (fig)
+
+def create_weight_line_chart(datasets):
+    fig = plot.figure()
+    ax1 = fig.add_subplot(111)
+
+    # X-AXIS
+    x_values = list(xrange(1, WEIGHT_QUERY_COUNT + 1))
+    N = len(x_values)
+    x_labels = x_values
+
+    num_items = len(LAYOUTS);
+    ind = np.arange(N)
+    idx = 0
+
+    ADAPT_OPT_LINE_WIDTH = 3.0
+    ADAPT_OPT_MARKER_SIZE = 5.0
+
+    # GROUP
+    for group_index, group in enumerate(SAMPLE_WEIGHTS):
+        group_data = []
+
+        # LINE
+        for line_index, line in enumerate(x_values):
+            group_data.append(datasets[group_index][line_index][1])
+
+        LOG.info("%s group_data = %s ", group, str(group_data))
+
+        ax1.plot(x_values, group_data, color=OPT_LINE_COLORS[idx], linewidth=ADAPT_OPT_LINE_WIDTH,
+                 marker=OPT_MARKERS[idx], markersize=ADAPT_OPT_MARKER_SIZE, label=str(group))
+
+        idx = idx + 1
+
+    # GRID
+    axes = ax1.get_axes()
+    makeGrid(ax1)
+
+    # Y-AXIS
+    ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
+    ax1.minorticks_off()
+    ax1.set_ylabel("Split Point", fontproperties=LABEL_FP)
+    #ax1.set_yscale('log', basey=10)
+
+    # X-AXIS
+    ax1.set_xlabel("Query Sequence", fontproperties=LABEL_FP)
+    major_ticks = np.arange(0, WEIGHT_QUERY_COUNT + 1, REPEAT_WEIGHT_TEST)
+    ax1.set_xticks(major_ticks)
+    
+    for major_tick in major_ticks[1:-1]:
+        ax1.axvline(major_tick, color='0.5', linestyle='dashed', linewidth=ADAPT_OPT_LINE_WIDTH)    
 
     return (fig)
 
@@ -944,15 +1022,15 @@ def subset_plot():
 # ADAPT -- PLOT
 def adapt_plot():
 
-    datasets = []
     column_count_type = 0
     for column_count in COLUMN_COUNTS:
         column_count_type = column_count_type + 1
+        datasets = []
 
         for layout in LAYOUTS:
             data_file = ADAPT_DIR + "/" + str(column_count) + "/" + layout + "/" + "adapt.csv"
 
-            dataset = loadDataFile(QUERY_COUNT, 2, data_file)
+            dataset = loadDataFile(QUERY_COUNT, 2, data_file)                    
             datasets.append(dataset)
 
         fig = create_adapt_line_chart(datasets)
@@ -964,7 +1042,23 @@ def adapt_plot():
 
         fileName = "adapt-" + table_type + ".pdf"
 
-        saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH * 3, height=OPT_GRAPH_HEIGHT/2.0)
+        saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH * 3, height=OPT_GRAPH_HEIGHT/1.5)
+
+# WEIGHT -- PLOT
+def weight_plot():
+
+    datasets = []
+    for sample_weight in SAMPLE_WEIGHTS:
+        data_file = WEIGHT_DIR + "/" + str(sample_weight) + "/" + "weight.csv"
+
+        dataset = loadDataFile(WEIGHT_QUERY_COUNT, 2, data_file)                    
+        datasets.append(dataset)
+
+    fig = create_weight_line_chart(datasets)
+
+    fileName = "weight.pdf"
+
+    saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH * 2.0, height=OPT_GRAPH_HEIGHT/2.0)
 
 ###################################################################################
 # EVAL HELPERS
@@ -1017,7 +1111,9 @@ def collect_stats(result_dir,
         tuples_per_tg = data[9]
         txn_itr = data[10]
         theta = data[11]
-        stat = data[12]
+        split_point = data[12]
+        sample_weight = data[13]
+        stat = data[14]
 
         if(layout == "0"):
             layout = "row"
@@ -1047,6 +1143,8 @@ def collect_stats(result_dir,
                 result_directory = result_dir + "/" + str(subset_experiment_type) + "/" + str(access_num_group)
         elif category == ADAPT_EXPERIMENT:
             result_directory = result_dir + "/" + column_count + "/" + layout
+        elif category == WEIGHT_EXPERIMENT:
+            result_directory = result_dir + "/" + str(sample_weight)
 
         if not os.path.exists(result_directory):
             os.makedirs(result_directory)
@@ -1061,6 +1159,8 @@ def collect_stats(result_dir,
             result_file.write(str(selectivity) + " , " + str(stat) + "\n")
         elif category == ADAPT_EXPERIMENT:
             result_file.write(str(txn_itr) + " , " + str(stat) + "\n")
+        elif category == WEIGHT_EXPERIMENT:
+            result_file.write(str(txn_itr) + " , " + str(split_point) + "\n")
 
         result_file.close()
 
@@ -1192,6 +1292,19 @@ def adapt_eval():
 
     # COLLECT STATS
     collect_stats(ADAPT_DIR, "adapt.csv", ADAPT_EXPERIMENT)
+    
+# WEIGHT -- EVAL
+def weight_eval():
+
+    # CLEAN UP RESULT DIR
+    clean_up_dir(WEIGHT_DIR)
+
+    # RUN EXPERIMENT
+    run_experiment(HYADAPT, SCALE_FACTOR,
+                   TRANSACTION_COUNT, WEIGHT_EXPERIMENT)
+
+    # COLLECT STATS
+    collect_stats(WEIGHT_DIR, "weight.csv", WEIGHT_EXPERIMENT)        
 
 ###################################################################################
 # MAIN
@@ -1207,6 +1320,7 @@ if __name__ == '__main__':
     parser.add_argument("-v", "--vertical", help='eval vertical', action='store_true')
     parser.add_argument("-u", "--subset", help='eval subset', action='store_true')
     parser.add_argument("-z", "--adapt", help='eval adapt', action='store_true')
+    parser.add_argument("-w", "--weight", help='eval weight', action='store_true')
 
     parser.add_argument("-a", "--projectivity_plot", help='plot projectivity', action='store_true')
     parser.add_argument("-b", "--selectivity_plot", help='plot selectivity', action='store_true')
@@ -1215,6 +1329,7 @@ if __name__ == '__main__':
     parser.add_argument("-e", "--vertical_plot", help='plot vertical', action='store_true')
     parser.add_argument("-f", "--subset_plot", help='plot subset', action='store_true')
     parser.add_argument("-g", "--adapt_plot", help='plot adapt', action='store_true')
+    parser.add_argument("-i", "--weight_plot", help='plot weight', action='store_true')
 
     args = parser.parse_args()
 
@@ -1260,6 +1375,12 @@ if __name__ == '__main__':
     if args.adapt_plot:
         adapt_plot()
 
+    if args.weight:
+        weight_eval()
+
+    if args.weight_plot:
+        weight_plot()
+               
     #create_legend()
     #create_bar_legend()
     #create_vertical_legend()
