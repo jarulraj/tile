@@ -155,7 +155,7 @@ WRITE_RATIOS = (0, 0.1)
 TUPLES_PER_TILEGROUP = (10, 100, 1000, 10000)
 NUM_GROUPS = 5
 
-THETAS = (0, 0.5)
+THETAS = (0, 0.9)
 
 TRANSACTION_COUNT = 3
 
@@ -740,7 +740,7 @@ def create_adapt_line_chart(datasets):
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
     ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
-    #ax1.set_yscale('log', basey=10)
+    ax1.set_yscale('log', basey=10)
 
     # X-AXIS
     ax1.set_xlabel("Query Sequence", fontproperties=LABEL_FP)
@@ -945,19 +945,26 @@ def subset_plot():
 def adapt_plot():
 
     datasets = []
-    for theta in THETAS:
-        
+    column_count_type = 0
+    for column_count in COLUMN_COUNTS:
+        column_count_type = column_count_type + 1
+
         for layout in LAYOUTS:
-            data_file = ADAPT_DIR + "/" + str(theta) + "/" + layout + "/" + "adapt.csv"
-    
+            data_file = ADAPT_DIR + "/" + str(column_count) + "/" + layout + "/" + "adapt.csv"
+
             dataset = loadDataFile(QUERY_COUNT, 2, data_file)
             datasets.append(dataset)
 
         fig = create_adapt_line_chart(datasets)
-    
-        fileName = "adapt-" + str(theta) + ".pdf"
 
-        saveGraph(fig, fileName, width=OPT_GRAPH_WIDTH*3, height=OPT_GRAPH_HEIGHT)
+        if column_count_type == 1:
+            table_type = "narrow"
+        else:
+            table_type = "wide"
+
+        fileName = "adapt-" + table_type + ".pdf"
+
+        saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH * 3, height=OPT_GRAPH_HEIGHT/2.0)
 
 ###################################################################################
 # EVAL HELPERS
@@ -1039,7 +1046,7 @@ def collect_stats(result_dir,
             elif subset_experiment_type == SUBSET_MULTIPLE_GROUP_EXPERIMENT:
                 result_directory = result_dir + "/" + str(subset_experiment_type) + "/" + str(access_num_group)
         elif category == ADAPT_EXPERIMENT:
-            result_directory = result_dir + "/" + str(theta) + "/" + layout 
+            result_directory = result_dir + "/" + column_count + "/" + layout
 
         if not os.path.exists(result_directory):
             os.makedirs(result_directory)
@@ -1185,19 +1192,6 @@ def adapt_eval():
 
     # COLLECT STATS
     collect_stats(ADAPT_DIR, "adapt.csv", ADAPT_EXPERIMENT)
-
-# THETA -- EVAL
-def theta_eval():
-
-    # CLEAN UP RESULT DIR
-    clean_up_dir(THETA_DIR)
-
-    # RUN EXPERIMENT
-    run_experiment(HYADAPT, SCALE_FACTOR,
-                   TRANSACTION_COUNT, THETA_EXPERIMENT)
-
-    # COLLECT STATS
-    collect_stats(THETA_DIR, "theta.csv", THETA_EXPERIMENT)
 
 ###################################################################################
 # MAIN
