@@ -166,7 +166,7 @@ QUERY_COUNT = NUM_ADAPT_TESTS * REPEAT_ADAPT_TEST
 
 SAMPLE_WEIGHTS = (0.001, 0.01, 0.1)
 NUM_WEIGHT_TEST = 10
-REPEAT_WEIGHT_TEST = 50
+REPEAT_WEIGHT_TEST = 20
 WEIGHT_QUERY_COUNT = NUM_WEIGHT_TEST * REPEAT_WEIGHT_TEST
 
 PROJECTIVITY_EXPERIMENT = 1
@@ -754,8 +754,8 @@ def create_adapt_line_chart(datasets):
     major_ticks = np.arange(0, QUERY_COUNT + 1, REPEAT_ADAPT_TEST)
     ax1.set_xticks(major_ticks)
     
-    for major_tick in major_ticks[1:-1]:
-        ax1.axvline(major_tick, color='0.5', linestyle='dashed', linewidth=ADAPT_OPT_LINE_WIDTH)    
+    #for major_tick in major_ticks[1:-1]:
+    #    ax1.axvline(major_tick, color='0.5', linestyle='dashed', linewidth=ADAPT_OPT_LINE_WIDTH)    
     
     # LABELS
     y_mark = 0.9
@@ -827,8 +827,8 @@ def create_weight_line_chart(datasets):
     major_ticks = np.arange(0, WEIGHT_QUERY_COUNT + 1, REPEAT_WEIGHT_TEST)
     ax1.set_xticks(major_ticks)
     
-    for major_tick in major_ticks[1:-1]:
-        ax1.axvline(major_tick, color='0.5', linestyle='dashed', linewidth=ADAPT_OPT_LINE_WIDTH)    
+    #for major_tick in major_ticks[1:-1]:
+    #    ax1.axvline(major_tick, color='0.5', linestyle='dashed', linewidth=ADAPT_OPT_LINE_WIDTH)    
 
     return (fig)
 
@@ -1058,7 +1058,7 @@ def weight_plot():
 
     fileName = "weight.pdf"
 
-    saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH * 2.0, height=OPT_GRAPH_HEIGHT/2.0)
+    saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
 
 ###################################################################################
 # EVAL HELPERS
