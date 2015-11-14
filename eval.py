@@ -34,6 +34,7 @@ from pprint import pprint, pformat
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib import rc
 from operator import add
+import matplotlib.font_manager as font_manager
 
 import csv
 import brewer2mpl
@@ -90,25 +91,25 @@ OPT_STACK_COLORS = ('#AFAFAF', '#F15854', '#5DA5DA', '#60BD68',  '#B276B2', '#DE
 
 # SET FONT
 
-LABEL_FONT_SIZE = 16
-TICK_FONT_SIZE = 14
+LABEL_FONT_SIZE = 14
+TICK_FONT_SIZE = 12
 TINY_FONT_SIZE = 8
-LEGEND_FONT_SIZE = 20
+LEGEND_FONT_SIZE = 16
 
 AXIS_LINEWIDTH = 1.3
 BAR_LINEWIDTH = 1.2
 
 # SET TYPE1 FONTS
-
 matplotlib.rcParams['ps.useafm'] = True
+matplotlib.rcParams['font.family'] = OPT_FONT_NAME
 matplotlib.rcParams['pdf.use14corefonts'] = True
 #matplotlib.rcParams['text.usetex'] = True
 #matplotlib.rcParams['text.latex.preamble']=[r'\usepackage{euler}']
 
-LABEL_FP = FontProperties(family=OPT_FONT_NAME, style='normal', size=LABEL_FONT_SIZE, weight='bold')
-TICK_FP = FontProperties(family=OPT_FONT_NAME, style='normal', size=TICK_FONT_SIZE)
-TINY_FP = FontProperties(family=OPT_FONT_NAME, style='normal', size=TINY_FONT_SIZE)
-LEGEND_FP = FontProperties(family=OPT_FONT_NAME, style='normal', size=LEGEND_FONT_SIZE, weight='bold')
+LABEL_FP = FontProperties(style='normal', size=LABEL_FONT_SIZE, weight='bold')
+TICK_FP = FontProperties(style='normal', size=TICK_FONT_SIZE)
+TINY_FP = FontProperties(style='normal', size=TINY_FONT_SIZE)
+LEGEND_FP = FontProperties(style='normal', size=LEGEND_FONT_SIZE, weight='bold')
 
 YAXIS_TICKS = 3
 YAXIS_ROUND = 1000.0
@@ -249,29 +250,40 @@ def create_bar_legend():
     fig = pylab.figure()
     ax1 = fig.add_subplot(111)
 
-    figlegend = pylab.figure(figsize=(6, 0.5))
+    figlegend = pylab.figure(figsize=(9, 0.5))
 
     num_items = len(LAYOUTS);
     ind = np.arange(1)
     margin = 0.10
     width = ((1.0 - 2 * margin) / num_items) * 2
+    data = [1]
 
-    bars = [None] * len(LAYOUTS) * 2
+    bars = [None] * (len(LAYOUTS) + 1) * 2
 
+    # TITLE
+    idx = 0    
+    bars[idx] = ax1.bar(ind + margin + ((idx) * width), data, width,
+                        color = 'w',
+                        linewidth=0)
+    
+    idx = 0    
     for group in xrange(len(LAYOUTS)):
-        data = [1]
-        bars[group] = ax1.bar(ind + margin + (group * width), data, width,
-                              color=OPT_COLORS[group],
-                              hatch=OPT_PATTERNS[group * 2],
+        bars[idx + 1] = ax1.bar(ind + margin + ((idx + 1) * width), data, width,
+                              color=OPT_COLORS[idx],
+                              hatch=OPT_PATTERNS[idx * 2],
                               linewidth=BAR_LINEWIDTH)
+        
+        idx = idx + 1
 
-    LABELS = ["NSM", "DSM", "FSM"]
+    TITLE = "Storage Models : "
+    LABELS = [TITLE, "NSM", "DSM", "FSM"]
 
     # LEGEND
-    figlegend.legend(bars, LABELS, prop=LABEL_FP,
-                     loc=1, ncol=3,
+    figlegend.legend(bars, LABELS, prop=LEGEND_FP, 
+                     loc=1, ncol=4,
                      mode="expand", shadow=OPT_LEGEND_SHADOW,
-                     frameon=False, borderaxespad=0.0, handleheight=2, handlelength=3.5)
+                     frameon=False, borderaxespad=0.0, 
+                     handleheight=1.5, handlelength=4)
 
     figlegend.savefig('legend_bar.pdf')
 
@@ -279,108 +291,71 @@ def create_vertical_legend():
     fig = pylab.figure()
     ax1 = fig.add_subplot(111)
 
-    figlegend = pylab.figure(figsize=(9, 0.5))
+    figlegend = pylab.figure(figsize=(11, 0.5))
 
     num_items = len(LAYOUTS);
     ind = np.arange(1)
     margin = 0.10
     width = ((1.0 - 2 * margin) / num_items) * 2
+    data = [1]
 
-    bars = [None] * len(TUPLES_PER_TILEGROUP) * 2
+    bars = [None] * (len(TUPLES_PER_TILEGROUP) + 1) * 2
 
+    # TITLE
+    idx = 0    
+    bars[idx] = ax1.bar(ind + margin + ((idx) * width), data, width,
+                        color = 'w',
+                        linewidth=0)
+
+    idx = 0
     for group in xrange(len(TUPLES_PER_TILEGROUP)):
-        data = [1]
-        bars[group] = ax1.bar(ind + margin + (group * width), data, width,
-                              color=OPT_COLORS[group],
+        bars[idx + 1] = ax1.bar(ind + margin + ((idx + 1) * width), data, width,
+                              color=OPT_COLORS[idx],
                               linewidth=BAR_LINEWIDTH)
+        
+        idx = idx + 1
 
+
+    TITLE = "Tuples Per Tile Group : "
+    LABELS = [TITLE, 10, 100, 1000, 10000]
+    
     # LEGEND
-    figlegend.legend(bars, TUPLES_PER_TILEGROUP, prop=LABEL_FP,
-                     loc=1, ncol=5,
+    figlegend.legend(bars, LABELS, prop=LEGEND_FP,
+                     loc=1, ncol=5, 
                      mode="expand", shadow=OPT_LEGEND_SHADOW,
-                     frameon=False, borderaxespad=0.0, handleheight=2, handlelength=3.5)
+                     frameon=False, borderaxespad=0.0, 
+                     handleheight=1.5, handlelength=4)
 
     figlegend.savefig('legend_vertical.pdf')
-
-def create_subset_single_legend():
-    fig = pylab.figure()
-    ax1 = fig.add_subplot(111)
-
-    figlegend = pylab.figure(figsize=(9, 0.5))
-
-    num_items = len(LAYOUTS);
-    ind = np.arange(1)
-    margin = 0.10
-    width = ((1.0 - 2 * margin) / num_items) * 2
-
-    bars = [None] * len(SUBSET_RATIOS) * 2
-
-    for group in xrange(len(SUBSET_RATIOS)):
-        data = [1]
-        bars[group] = ax1.bar(ind + margin + (group * width), data, width,
-                              color=OPT_COLORS[group],
-                              linewidth=BAR_LINEWIDTH)
-
-    # LEGEND
-    figlegend.legend(bars, SUBSET_RATIOS, prop=LABEL_FP,
-                     loc=1, ncol=5,
-                     mode="expand", shadow=OPT_LEGEND_SHADOW,
-                     frameon=False, borderaxespad=0.0, handleheight=2, handlelength=3.5)
-
-    figlegend.savefig('legend_subset_single.pdf')
-
-def create_subset_multiple_legend():
-    fig = pylab.figure()
-    ax1 = fig.add_subplot(111)
-
-    figlegend = pylab.figure(figsize=(9, 0.5))
-
-    num_items = len(LAYOUTS);
-    ind = np.arange(1)
-    margin = 0.10
-    width = ((1.0 - 2 * margin) / num_items) * 2
-
-    bars = [None] * len(ACCESS_NUM_GROUPS) * 2
-
-    for group in xrange(len(ACCESS_NUM_GROUPS)):
-        data = [1]
-        bars[group] = ax1.bar(ind + margin + (group * width), data, width,
-                              color=OPT_COLORS[group],
-                              linewidth=BAR_LINEWIDTH)
-
-
-    # LEGEND
-    figlegend.legend(bars, ACCESS_NUM_GROUPS, prop=LABEL_FP,
-                     loc=1, ncol=5,
-                     mode="expand", shadow=OPT_LEGEND_SHADOW,
-                     frameon=False, borderaxespad=0.0, handleheight=2, handlelength=3.5)
-
-    figlegend.savefig('legend_subset_multiple.pdf')
-
 
 def create_legend():
     fig = pylab.figure()
     ax1 = fig.add_subplot(111)
 
-    figlegend = pylab.figure(figsize=(8, 0.5))
+    figlegend = pylab.figure(figsize=(9, 0.5))
     idx = 0
-    lines = [None] * len(LAYOUTS)
+    lines = [None] * (len(LAYOUTS) + 1)
+    data = [1]
+    x_values = [1]
 
-    layouts = ["NSM", "DSM", "FSM"]
-
+    TITLE = "Storage Models : "
+    LABELS = [TITLE, "NSM", "DSM", "FSM"]
+        
+    lines[idx], = ax1.plot(x_values, data, linewidth = 0)    
+    idx = 0
+    
     for group in xrange(len(LAYOUTS)):
-        data = [1]
-        x_values = [1]
-
-        lines[idx], = ax1.plot(x_values, data, color=OPT_LINE_COLORS[idx], linewidth=OPT_LINE_WIDTH,
-                 marker=OPT_MARKERS[idx], markersize=OPT_MARKER_SIZE, label=str(group))
+        lines[idx + 1], = ax1.plot(x_values, data, 
+                               color=OPT_LINE_COLORS[idx], linewidth=OPT_LINE_WIDTH,
+                               marker=OPT_MARKERS[idx], markersize=OPT_MARKER_SIZE, label=str(group))
 
         idx = idx + 1
 
     # LEGEND
-    figlegend.legend(lines,  layouts, prop=LEGEND_FP, loc=1, ncol=4, mode="expand", shadow=OPT_LEGEND_SHADOW,
+    figlegend.legend(lines, LABELS, prop=LEGEND_FP,
+                     loc=1, ncol=4, mode="expand", shadow=OPT_LEGEND_SHADOW,
                      frameon=False, borderaxespad=0.0, handlelength=4)
-
+        
     figlegend.savefig('legend.pdf')
 
 
@@ -653,6 +628,20 @@ def create_subset_bar_chart(datasets):
     for label in ax1.get_xticklabels() :
         label.set_fontproperties(TICK_FP)
 
+    TITLE = "Subset Ratio"
+    LABELS = SUBSET_RATIOS
+    
+    # LEGEND
+    ax1.legend(bars, LABELS, prop=LEGEND_FP, 
+               loc='upper left',
+               title = TITLE,
+               ncol=3, shadow=OPT_LEGEND_SHADOW,
+               frameon=False, borderaxespad=0.0, 
+               handleheight=0.25, handlelength=0.75)
+
+    ax1.get_legend().get_title().set_fontproperties(LABEL_FP)
+    ax1.get_legend().get_title().set_position((-55, 0))
+
     return (fig)
 
 def create_ycsb_bar_chart(datasets):
@@ -790,9 +779,10 @@ def create_weight_line_chart(datasets):
     N = len(x_values)
     x_labels = x_values
 
-    num_items = len(LAYOUTS);
+    num_items = len(SAMPLE_WEIGHTS);
     ind = np.arange(N)
     idx = 0
+    lines = [None] * (len(SAMPLE_WEIGHTS) + 1)
 
     ADAPT_OPT_LINE_WIDTH = 3.0
     ADAPT_OPT_MARKER_SIZE = 5.0
@@ -807,7 +797,7 @@ def create_weight_line_chart(datasets):
 
         LOG.info("%s group_data = %s ", group, str(group_data))
 
-        ax1.plot(x_values, group_data, color=OPT_LINE_COLORS[idx], linewidth=ADAPT_OPT_LINE_WIDTH,
+        lines[idx], = ax1.plot(x_values, group_data, color=OPT_LINE_COLORS[idx], linewidth=ADAPT_OPT_LINE_WIDTH,
                  marker=OPT_MARKERS[idx], markersize=ADAPT_OPT_MARKER_SIZE, label=str(group))
 
         idx = idx + 1
@@ -829,6 +819,17 @@ def create_weight_line_chart(datasets):
     
     #for major_tick in major_ticks[1:-1]:
     #    ax1.axvline(major_tick, color='0.5', linestyle='dashed', linewidth=ADAPT_OPT_LINE_WIDTH)    
+
+    TITLE = "Weight"
+    LABELS = SAMPLE_WEIGHTS
+    
+    # LEGEND
+    ax1.legend(lines, LABELS, prop=LABEL_FP, title = TITLE,
+               loc=1, ncol=1, mode="expand", shadow=OPT_LEGEND_SHADOW,
+               frameon=False, borderaxespad=0.0, handlelength=2)
+
+    ax1.get_legend().get_title().set_fontproperties(LABEL_FP)
+    ax1.get_legend().get_title().set_position((-110, 0))
 
     return (fig)
 
@@ -1380,11 +1381,9 @@ if __name__ == '__main__':
 
     if args.weight_plot:
         weight_plot()
-               
+
     #create_legend()
     #create_bar_legend()
     #create_vertical_legend()
-    #create_subset_single_legend()
-    #create_subset_multiple_legend()
 
 
