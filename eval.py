@@ -942,6 +942,9 @@ def create_distribution_stack_chart(datasets):
 
         LOG.info("%s group_data = %s ", group, str(group_data))
 
+        if group_index == 0:
+            continue
+
         lines[idx], = ax1.plot(x_values, group_data, color=OPT_LINE_COLORS[idx], linewidth=ADAPT_OPT_LINE_WIDTH,
                  marker=OPT_MARKERS[idx], markersize=ADAPT_OPT_MARKER_SIZE, label=str(group))
 
@@ -965,8 +968,8 @@ def create_distribution_stack_chart(datasets):
     #for major_tick in major_ticks[1:-1]:
     #    ax1.axvline(major_tick, color='0.5', linestyle='dashed', linewidth=ADAPT_OPT_LINE_WIDTH)
 
-    TITLE = "Tile Group Types"
-    LABELS = ("T1", "T2", "T3", "T4", "T5")
+    TITLE = "Tile Group Layouts"
+    LABELS = ("FSM", "NSM", "T3", "T4", "T5")
 
     # Clean up list
     LABELS = LABELS[:DIST_TILE_GROUP_TYPES]
@@ -978,7 +981,7 @@ def create_distribution_stack_chart(datasets):
                frameon=False, borderaxespad=0.0, handlelength=2)
 
     ax1.get_legend().get_title().set_fontproperties(LABEL_FP)
-    ax1.get_legend().get_title().set_position((-50, 0))
+    ax1.get_legend().get_title().set_position((-10, 0))
 
     return (fig)
 
