@@ -172,8 +172,7 @@ NUM_WEIGHT_TEST = 10
 REPEAT_WEIGHT_TEST = 20
 WEIGHT_QUERY_COUNT = NUM_WEIGHT_TEST * REPEAT_WEIGHT_TEST
 
-REORG_SCALE_FACTORS = (100, 1000)
-REORG_QUERY_COUNT = 50
+REORG_QUERY_COUNT = 25 * 4
 
 PROJECTIVITY_EXPERIMENT = 1
 SELECTIVITY_EXPERIMENT = 2
@@ -742,7 +741,7 @@ def create_adapt_line_chart(datasets):
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
     ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
-    ax1.set_yscale('log', basey=10)
+    #ax1.set_yscale('log', basey=10)
 
     # X-AXIS
     ax1.set_xlabel("Query Sequence", fontproperties=LABEL_FP)
@@ -831,7 +830,7 @@ def create_weight_line_chart(datasets):
     
     # LEGEND
     ax1.legend(lines, LABELS, prop=LABEL_FP, title = TITLE,
-               loc=1, ncol=1, mode="expand", shadow=OPT_LEGEND_SHADOW,
+               loc=1, ncol=3, mode="expand", shadow=OPT_LEGEND_SHADOW,
                frameon=False, borderaxespad=0.0, handlelength=2)
 
     ax1.get_legend().get_title().set_fontproperties(LABEL_FP)
@@ -879,10 +878,10 @@ def create_reorg_line_chart(datasets):
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
     ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
-    ax1.set_yscale('log', basey=10)
+    #ax1.set_yscale('log', basey=10)
 
     # X-AXIS
-    REORG_INTERVAL = 5
+    REORG_INTERVAL = 25
     ax1.set_xlabel("Query Sequence", fontproperties=LABEL_FP)
     major_ticks = np.arange(0, REORG_QUERY_COUNT + 1, REORG_INTERVAL)
     ax1.set_xticks(major_ticks)
@@ -1127,20 +1126,20 @@ def weight_plot():
 # REORG -- PLOT
 def reorg_plot():
 
-    for reorg_scale_factor in REORG_SCALE_FACTORS:
-        datasets = []
-        
-        for layout in REORG_LAYOUTS:
-            data_file = REORG_DIR + "/" + str(reorg_scale_factor) + "/" + str(layout) + "/" + "reorg.csv"
+    reorg_scale_factor = 100
+    datasets = []
     
-            dataset = loadDataFile(REORG_QUERY_COUNT, 2, data_file)                    
-            datasets.append(dataset)
+    for layout in REORG_LAYOUTS:
+        data_file = REORG_DIR + "/" + str(reorg_scale_factor) + "/" + str(layout) + "/" + "reorg.csv"
 
-        fig = create_reorg_line_chart(datasets)
-    
-        fileName = "reorg_" + str(reorg_scale_factor) + ".pdf"
+        dataset = loadDataFile(REORG_QUERY_COUNT, 2, data_file)                    
+        datasets.append(dataset)
 
-        saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
+    fig = create_reorg_line_chart(datasets)
+
+    fileName = "reorg.pdf"
+
+    saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
 
 ###################################################################################
 # EVAL HELPERS
