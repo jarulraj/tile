@@ -134,9 +134,11 @@ VERTICAL_DIR = BASE_DIR + "/results/vertical/"
 SUBSET_DIR = BASE_DIR + "/results/subset/"
 ADAPT_DIR = BASE_DIR + "/results/adapt/"
 WEIGHT_DIR = BASE_DIR + "/results/weight/"
+REORG_DIR = BASE_DIR + "/results/reorg/"
 
 LAYOUTS = ("row", "column", "hybrid")
 OPERATORS = ("direct", "aggregate")
+REORG_LAYOUTS = ("row", "hybrid")
 
 SCALE_FACTOR = 1000.0
 
@@ -170,6 +172,9 @@ NUM_WEIGHT_TEST = 10
 REPEAT_WEIGHT_TEST = 20
 WEIGHT_QUERY_COUNT = NUM_WEIGHT_TEST * REPEAT_WEIGHT_TEST
 
+REORG_SCALE_FACTORS = (100, 1000)
+REORG_QUERY_COUNT = 50
+
 PROJECTIVITY_EXPERIMENT = 1
 SELECTIVITY_EXPERIMENT = 2
 OPERATOR_EXPERIMENT = 3
@@ -177,6 +182,7 @@ VERTICAL_EXPERIMENT= 4
 SUBSET_EXPERIMENT= 5
 ADAPT_EXPERIMENT = 6
 WEIGHT_EXPERIMENT = 7
+REORG_EXPERIMENT = 8
 
 YCSB_EXPERIMENT = 1
 
@@ -833,6 +839,70 @@ def create_weight_line_chart(datasets):
 
     return (fig)
 
+def create_reorg_line_chart(datasets):
+    fig = plot.figure()
+    ax1 = fig.add_subplot(111)
+
+    # X-AXIS
+    x_values = list(xrange(1, REORG_QUERY_COUNT + 1))
+    N = len(x_values)
+    x_labels = x_values
+
+    num_items = len(REORG_LAYOUTS);
+    ind = np.arange(N)
+    idx = 0
+    lines = [None] * (len(REORG_LAYOUTS) + 1)
+
+    ADAPT_OPT_LINE_WIDTH = 3.0
+    ADAPT_OPT_MARKER_SIZE = 5.0
+
+    # GROUP
+    for group_index, group in enumerate(REORG_LAYOUTS):
+        group_data = []
+
+        # LINE
+        for line_index, line in enumerate(x_values):
+            group_data.append(datasets[group_index][line_index][1])
+
+        LOG.info("%s group_data = %s ", group, str(group_data))
+
+        lines[idx], = ax1.plot(x_values, group_data, color=OPT_LINE_COLORS[idx], linewidth=ADAPT_OPT_LINE_WIDTH,
+                 marker=OPT_MARKERS[idx], markersize=ADAPT_OPT_MARKER_SIZE, label=str(group))
+
+        idx = idx + 1
+
+    # GRID
+    axes = ax1.get_axes()
+    makeGrid(ax1)
+
+    # Y-AXIS
+    ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
+    ax1.minorticks_off()
+    ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
+    ax1.set_yscale('log', basey=10)
+
+    # X-AXIS
+    REORG_INTERVAL = 5
+    ax1.set_xlabel("Query Sequence", fontproperties=LABEL_FP)
+    major_ticks = np.arange(0, REORG_QUERY_COUNT + 1, REORG_INTERVAL)
+    ax1.set_xticks(major_ticks)
+    
+    #for major_tick in major_ticks[1:-1]:
+    #    ax1.axvline(major_tick, color='0.5', linestyle='dashed', linewidth=ADAPT_OPT_LINE_WIDTH)    
+
+    TITLE = "Reorganization Type"
+    LABELS = ("Immediate", "Incremental")
+    
+    # LEGEND
+    ax1.legend(lines, LABELS, prop=LABEL_FP, title = TITLE,
+               loc=0, ncol=1, shadow=OPT_LEGEND_SHADOW,
+               frameon=False, borderaxespad=0.0, handlelength=2)
+
+    ax1.get_legend().get_title().set_fontproperties(LABEL_FP)
+    ax1.get_legend().get_title().set_position((0, 0))
+
+    return (fig)
+
 ###################################################################################
 # PLOT HELPERS
 ###################################################################################
@@ -1054,6 +1124,24 @@ def weight_plot():
 
     saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
 
+# REORG -- PLOT
+def reorg_plot():
+
+    for reorg_scale_factor in REORG_SCALE_FACTORS:
+        datasets = []
+        
+        for layout in REORG_LAYOUTS:
+            data_file = REORG_DIR + "/" + str(reorg_scale_factor) + "/" + str(layout) + "/" + "reorg.csv"
+    
+            dataset = loadDataFile(REORG_QUERY_COUNT, 2, data_file)                    
+            datasets.append(dataset)
+
+        fig = create_reorg_line_chart(datasets)
+    
+        fileName = "reorg_" + str(reorg_scale_factor) + ".pdf"
+
+        saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
+
 ###################################################################################
 # EVAL HELPERS
 ###################################################################################
@@ -1107,7 +1195,8 @@ def collect_stats(result_dir,
         theta = data[11]
         split_point = data[12]
         sample_weight = data[13]
-        stat = data[14]
+        scale_factor = data[14]
+        stat = data[15]
 
         if(layout == "0"):
             layout = "row"
@@ -1139,6 +1228,8 @@ def collect_stats(result_dir,
             result_directory = result_dir + "/" + column_count + "/" + layout
         elif category == WEIGHT_EXPERIMENT:
             result_directory = result_dir + "/" + str(sample_weight)
+        elif category == REORG_EXPERIMENT:
+            result_directory = result_dir + "/" + str(scale_factor) + "/" + layout
 
         if not os.path.exists(result_directory):
             os.makedirs(result_directory)
@@ -1151,7 +1242,7 @@ def collect_stats(result_dir,
             result_file.write(str(projectivity) + " , " + str(stat) + "\n")
         elif category == SELECTIVITY_EXPERIMENT or category == OPERATOR_EXPERIMENT or category == VERTICAL_EXPERIMENT or category == SUBSET_EXPERIMENT:
             result_file.write(str(selectivity) + " , " + str(stat) + "\n")
-        elif category == ADAPT_EXPERIMENT:
+        elif category == ADAPT_EXPERIMENT or category == REORG_EXPERIMENT:
             result_file.write(str(txn_itr) + " , " + str(stat) + "\n")
         elif category == WEIGHT_EXPERIMENT:
             result_file.write(str(txn_itr) + " , " + str(split_point) + "\n")
@@ -1300,6 +1391,19 @@ def weight_eval():
     # COLLECT STATS
     collect_stats(WEIGHT_DIR, "weight.csv", WEIGHT_EXPERIMENT)        
 
+# REORG -- EVAL
+def reorg_eval():
+
+    # CLEAN UP RESULT DIR
+    clean_up_dir(REORG_DIR)
+
+    # RUN EXPERIMENT
+    run_experiment(HYADAPT, SCALE_FACTOR,
+                   TRANSACTION_COUNT, REORG_EXPERIMENT)
+
+    # COLLECT STATS
+    collect_stats(REORG_DIR, "reorg.csv", REORG_EXPERIMENT)    
+
 ###################################################################################
 # MAIN
 ###################################################################################
@@ -1315,6 +1419,7 @@ if __name__ == '__main__':
     parser.add_argument("-u", "--subset", help='eval subset', action='store_true')
     parser.add_argument("-z", "--adapt", help='eval adapt', action='store_true')
     parser.add_argument("-w", "--weight", help='eval weight', action='store_true')
+    parser.add_argument("-r", "--reorg", help='eval reorg', action='store_true')
 
     parser.add_argument("-a", "--projectivity_plot", help='plot projectivity', action='store_true')
     parser.add_argument("-b", "--selectivity_plot", help='plot selectivity', action='store_true')
@@ -1324,6 +1429,7 @@ if __name__ == '__main__':
     parser.add_argument("-f", "--subset_plot", help='plot subset', action='store_true')
     parser.add_argument("-g", "--adapt_plot", help='plot adapt', action='store_true')
     parser.add_argument("-i", "--weight_plot", help='plot weight', action='store_true')
+    parser.add_argument("-j", "--reorg_plot", help='plot reorg', action='store_true')
 
     args = parser.parse_args()
 
@@ -1374,6 +1480,12 @@ if __name__ == '__main__':
 
     if args.weight_plot:
         weight_plot()
+
+    if args.reorg:
+        reorg_eval()
+
+    if args.reorg_plot:
+        reorg_plot()
 
     #create_legend()
     #create_bar_legend()
