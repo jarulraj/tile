@@ -87,7 +87,9 @@ OPT_LINE_WIDTH = 6.0
 OPT_MARKER_SIZE = 10.0
 DATA_LABELS = []
 
+
 OPT_STACK_COLORS = ('#AFAFAF', '#F15854', '#5DA5DA', '#60BD68',  '#B276B2', '#DECF3F', '#F17CB0', '#B2912F', '#FAA43A')
+OPT_LINE_STYLES= ('-', ':', '--', '-.')
 
 # SET FONT
 
@@ -167,9 +169,9 @@ NUM_ADAPT_TESTS = 12
 REPEAT_ADAPT_TEST = 25
 QUERY_COUNT = NUM_ADAPT_TESTS * REPEAT_ADAPT_TEST
 
-SAMPLE_WEIGHTS = (0.001, 0.01, 0.1)
+SAMPLE_WEIGHTS = (0.0001, 0.001, 0.01, 0.1)
 NUM_WEIGHT_TEST = 10
-REPEAT_WEIGHT_TEST = 20
+REPEAT_WEIGHT_TEST = 1000
 WEIGHT_QUERY_COUNT = NUM_WEIGHT_TEST * REPEAT_WEIGHT_TEST
 
 REORG_QUERY_COUNT = 25 * 4
@@ -802,8 +804,9 @@ def create_weight_line_chart(datasets):
 
         LOG.info("%s group_data = %s ", group, str(group_data))
 
-        lines[idx], = ax1.plot(x_values, group_data, color=OPT_LINE_COLORS[idx], linewidth=ADAPT_OPT_LINE_WIDTH,
-                 marker=OPT_MARKERS[idx], markersize=ADAPT_OPT_MARKER_SIZE, label=str(group))
+        lines[idx], = ax1.plot(x_values, group_data, color=OPT_LINE_COLORS[idx], 
+                               linewidth=ADAPT_OPT_LINE_WIDTH,
+                               label=str(group))
 
         idx = idx + 1
 
@@ -812,14 +815,17 @@ def create_weight_line_chart(datasets):
     makeGrid(ax1)
 
     # Y-AXIS
+    YMIN = 0
+    YMAX = 200
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
     ax1.set_ylabel("Split Point", fontproperties=LABEL_FP)
+    ax1.set_ylim((YMIN, YMAX))
     #ax1.set_yscale('log', basey=10)
 
     # X-AXIS
     ax1.set_xlabel("Query Sequence", fontproperties=LABEL_FP)
-    major_ticks = np.arange(0, WEIGHT_QUERY_COUNT + 1, REPEAT_WEIGHT_TEST)
+    major_ticks = np.arange(0, WEIGHT_QUERY_COUNT + 1, REPEAT_WEIGHT_TEST * 2)
     ax1.set_xticks(major_ticks)
     
     #for major_tick in major_ticks[1:-1]:
@@ -830,11 +836,11 @@ def create_weight_line_chart(datasets):
     
     # LEGEND
     ax1.legend(lines, LABELS, prop=LABEL_FP, title = TITLE,
-               loc=1, ncol=3, mode="expand", shadow=OPT_LEGEND_SHADOW,
+               loc=0, ncol=2, shadow=OPT_LEGEND_SHADOW,
                frameon=False, borderaxespad=0.0, handlelength=2)
 
     ax1.get_legend().get_title().set_fontproperties(LABEL_FP)
-    ax1.get_legend().get_title().set_position((-110, 0))
+    ax1.get_legend().get_title().set_position((-60, 0))
 
     return (fig)
 
@@ -877,7 +883,7 @@ def create_reorg_line_chart(datasets):
     # Y-AXIS
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
-    ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
+    ax1.set_ylabel("Runtime (ms)", fontproperties=LABEL_FP)
     #ax1.set_yscale('log', basey=10)
 
     # X-AXIS
@@ -894,7 +900,7 @@ def create_reorg_line_chart(datasets):
     
     # LEGEND
     ax1.legend(lines, LABELS, prop=LABEL_FP, title = TITLE,
-               loc=0, ncol=1, shadow=OPT_LEGEND_SHADOW,
+               loc=0, ncol=2, shadow=OPT_LEGEND_SHADOW,
                frameon=False, borderaxespad=0.0, handlelength=2)
 
     ax1.get_legend().get_title().set_fontproperties(LABEL_FP)
@@ -1121,7 +1127,7 @@ def weight_plot():
 
     fileName = "weight.pdf"
 
-    saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
+    saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.5)
 
 # REORG -- PLOT
 def reorg_plot():
@@ -1139,7 +1145,7 @@ def reorg_plot():
 
     fileName = "reorg.pdf"
 
-    saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
+    saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.5)
 
 ###################################################################################
 # EVAL HELPERS
