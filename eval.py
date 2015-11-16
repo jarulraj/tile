@@ -137,12 +137,13 @@ SUBSET_DIR = BASE_DIR + "/results/subset/"
 ADAPT_DIR = BASE_DIR + "/results/adapt/"
 WEIGHT_DIR = BASE_DIR + "/results/weight/"
 REORG_DIR = BASE_DIR + "/results/reorg/"
+DISTRIBUTION_DIR = BASE_DIR + "/results/distribution/"
 
 LAYOUTS = ("row", "column", "hybrid")
 OPERATORS = ("direct", "aggregate")
 REORG_LAYOUTS = ("row", "hybrid")
 
-SCALE_FACTOR = 1000.0
+SCALE_FACTOR = 100.0
 
 SELECTIVITY = (0.2, 0.4, 0.6, 0.8, 1.0)
 PROJECTIVITY = (0.01, 0.1, 0.5, 1.0)
@@ -162,6 +163,7 @@ TUPLES_PER_TILEGROUP = (10, 100, 1000, 10000)
 NUM_GROUPS = 5
 
 THETAS = (0, 0.5)
+DIST_TILE_GROUP_TYPES = 3
 
 TRANSACTION_COUNT = 3
 
@@ -175,6 +177,7 @@ REPEAT_WEIGHT_TEST = 1000
 WEIGHT_QUERY_COUNT = NUM_WEIGHT_TEST * REPEAT_WEIGHT_TEST
 
 REORG_QUERY_COUNT = 25 * 4
+DIST_QUERY_COUNT = 12
 
 PROJECTIVITY_EXPERIMENT = 1
 SELECTIVITY_EXPERIMENT = 2
@@ -184,6 +187,7 @@ SUBSET_EXPERIMENT= 5
 ADAPT_EXPERIMENT = 6
 WEIGHT_EXPERIMENT = 7
 REORG_EXPERIMENT = 8
+DISTRIBUTION_EXPERIMENT = 9
 
 YCSB_EXPERIMENT = 1
 
@@ -268,28 +272,28 @@ def create_bar_legend():
     bars = [None] * (len(LAYOUTS) + 1) * 2
 
     # TITLE
-    idx = 0    
+    idx = 0
     bars[idx] = ax1.bar(ind + margin + ((idx) * width), data, width,
                         color = 'w',
                         linewidth=0)
-    
-    idx = 0    
+
+    idx = 0
     for group in xrange(len(LAYOUTS)):
         bars[idx + 1] = ax1.bar(ind + margin + ((idx + 1) * width), data, width,
                               color=OPT_COLORS[idx],
                               hatch=OPT_PATTERNS[idx * 2],
                               linewidth=BAR_LINEWIDTH)
-        
+
         idx = idx + 1
 
     TITLE = "Storage Models : "
     LABELS = [TITLE, "NSM", "DSM", "FSM"]
 
     # LEGEND
-    figlegend.legend(bars, LABELS, prop=LEGEND_FP, 
+    figlegend.legend(bars, LABELS, prop=LEGEND_FP,
                      loc=1, ncol=4,
                      mode="expand", shadow=OPT_LEGEND_SHADOW,
-                     frameon=False, borderaxespad=0.0, 
+                     frameon=False, borderaxespad=0.0,
                      handleheight=1.5, handlelength=4)
 
     figlegend.savefig('legend_bar.pdf')
@@ -309,7 +313,7 @@ def create_vertical_legend():
     bars = [None] * (len(TUPLES_PER_TILEGROUP) + 1) * 2
 
     # TITLE
-    idx = 0    
+    idx = 0
     bars[idx] = ax1.bar(ind + margin + ((idx) * width), data, width,
                         color = 'w',
                         linewidth=0)
@@ -319,18 +323,18 @@ def create_vertical_legend():
         bars[idx + 1] = ax1.bar(ind + margin + ((idx + 1) * width), data, width,
                               color=OPT_COLORS[idx],
                               linewidth=BAR_LINEWIDTH)
-        
+
         idx = idx + 1
 
 
     TITLE = "Tuples Per Tile Group : "
     LABELS = [TITLE, 10, 100, 1000, 10000]
-    
+
     # LEGEND
     figlegend.legend(bars, LABELS, prop=LEGEND_FP,
-                     loc=1, ncol=5, 
+                     loc=1, ncol=5,
                      mode="expand", shadow=OPT_LEGEND_SHADOW,
-                     frameon=False, borderaxespad=0.0, 
+                     frameon=False, borderaxespad=0.0,
                      handleheight=1.5, handlelength=4)
 
     figlegend.savefig('legend_vertical.pdf')
@@ -347,12 +351,12 @@ def create_legend():
 
     TITLE = "Storage Models : "
     LABELS = [TITLE, "NSM", "DSM", "FSM"]
-        
-    lines[idx], = ax1.plot(x_values, data, linewidth = 0)    
+
+    lines[idx], = ax1.plot(x_values, data, linewidth = 0)
     idx = 0
-    
+
     for group in xrange(len(LAYOUTS)):
-        lines[idx + 1], = ax1.plot(x_values, data, 
+        lines[idx + 1], = ax1.plot(x_values, data,
                                color=OPT_LINE_COLORS[idx], linewidth=OPT_LINE_WIDTH,
                                marker=OPT_MARKERS[idx], markersize=OPT_MARKER_SIZE, label=str(group))
 
@@ -362,7 +366,7 @@ def create_legend():
     figlegend.legend(lines, LABELS, prop=LEGEND_FP,
                      loc=1, ncol=4, mode="expand", shadow=OPT_LEGEND_SHADOW,
                      frameon=False, borderaxespad=0.0, handlelength=4)
-        
+
     figlegend.savefig('legend.pdf')
 
 
@@ -637,13 +641,13 @@ def create_subset_bar_chart(datasets):
 
     TITLE = "Subset Ratio"
     LABELS = SUBSET_RATIOS
-    
+
     # LEGEND
-    ax1.legend(bars, LABELS, prop=LEGEND_FP, 
+    ax1.legend(bars, LABELS, prop=LEGEND_FP,
                loc='upper left',
                title = TITLE,
                ncol=3, shadow=OPT_LEGEND_SHADOW,
-               frameon=False, borderaxespad=0.0, 
+               frameon=False, borderaxespad=0.0,
                handleheight=0.25, handlelength=0.75)
 
     ax1.get_legend().get_title().set_fontproperties(LABEL_FP)
@@ -749,27 +753,27 @@ def create_adapt_line_chart(datasets):
     ax1.set_xlabel("Query Sequence", fontproperties=LABEL_FP)
     major_ticks = np.arange(0, QUERY_COUNT + 1, REPEAT_ADAPT_TEST)
     ax1.set_xticks(major_ticks)
-    
+
     #for major_tick in major_ticks[1:-1]:
-    #    ax1.axvline(major_tick, color='0.5', linestyle='dashed', linewidth=ADAPT_OPT_LINE_WIDTH)    
-    
+    #    ax1.axvline(major_tick, color='0.5', linestyle='dashed', linewidth=ADAPT_OPT_LINE_WIDTH)
+
     # LABELS
     y_mark = 0.9
     x_mark_count = 1.0/NUM_ADAPT_TESTS
     x_mark_offset = x_mark_count/2 - x_mark_count/4
     x_marks = np.arange(0, 1, x_mark_count)
-    
+
     ADAPT_LABELS = (["Select", "Insert", "Select", "Insert",
                      "Select", "Insert", "Select", "Insert",
                      "Select", "Insert", "Select", "Insert"])
-    
+
     for idx, x_mark in enumerate(x_marks):
-            ax1.text(x_mark + x_mark_offset, 
-                     y_mark, 
-                     ADAPT_LABELS[idx], 
+            ax1.text(x_mark + x_mark_offset,
+                     y_mark,
+                     ADAPT_LABELS[idx],
                      transform=ax1.transAxes,
                      bbox=dict(facecolor='skyblue', alpha=0.5))
-        
+
     for label in ax1.get_yticklabels() :
         label.set_fontproperties(TICK_FP)
     for label in ax1.get_xticklabels() :
@@ -804,7 +808,7 @@ def create_weight_line_chart(datasets):
 
         LOG.info("%s group_data = %s ", group, str(group_data))
 
-        lines[idx], = ax1.plot(x_values, group_data, color=OPT_LINE_COLORS[idx], 
+        lines[idx], = ax1.plot(x_values, group_data, color=OPT_LINE_COLORS[idx],
                                linewidth=ADAPT_OPT_LINE_WIDTH,
                                label=str(group))
 
@@ -827,13 +831,13 @@ def create_weight_line_chart(datasets):
     ax1.set_xlabel("Query Sequence", fontproperties=LABEL_FP)
     major_ticks = np.arange(0, WEIGHT_QUERY_COUNT + 1, REPEAT_WEIGHT_TEST * 2)
     ax1.set_xticks(major_ticks)
-    
+
     #for major_tick in major_ticks[1:-1]:
-    #    ax1.axvline(major_tick, color='0.5', linestyle='dashed', linewidth=ADAPT_OPT_LINE_WIDTH)    
+    #    ax1.axvline(major_tick, color='0.5', linestyle='dashed', linewidth=ADAPT_OPT_LINE_WIDTH)
 
     TITLE = "Weight"
     LABELS = SAMPLE_WEIGHTS
-    
+
     # LEGEND
     ax1.legend(lines, LABELS, prop=LABEL_FP, title = TITLE,
                loc=0, ncol=2, shadow=OPT_LEGEND_SHADOW,
@@ -894,13 +898,13 @@ def create_reorg_line_chart(datasets):
     ax1.set_xlabel("Query Sequence", fontproperties=LABEL_FP)
     major_ticks = np.arange(0, REORG_QUERY_COUNT + 1, REORG_INTERVAL)
     ax1.set_xticks(major_ticks)
-    
+
     #for major_tick in major_ticks[1:-1]:
-    #    ax1.axvline(major_tick, color='0.5', linestyle='dashed', linewidth=ADAPT_OPT_LINE_WIDTH)    
+    #    ax1.axvline(major_tick, color='0.5', linestyle='dashed', linewidth=ADAPT_OPT_LINE_WIDTH)
 
     TITLE = "Reorganization Type"
     LABELS = ("Immediate", "Incremental")
-    
+
     # LEGEND
     ax1.legend(lines, LABELS, prop=LABEL_FP, title = TITLE,
                loc=0, ncol=2, shadow=OPT_LEGEND_SHADOW,
@@ -908,6 +912,73 @@ def create_reorg_line_chart(datasets):
 
     ax1.get_legend().get_title().set_fontproperties(LABEL_FP)
     ax1.get_legend().get_title().set_position((0, 0))
+
+    return (fig)
+
+def create_distribution_stack_chart(datasets):
+    fig = plot.figure()
+    ax1 = fig.add_subplot(111)
+
+    # X-AXIS
+    x_values = list(xrange(1, DIST_QUERY_COUNT + 1))
+    N = len(x_values)
+    x_labels = x_values
+
+    num_items = DIST_TILE_GROUP_TYPES;
+    ind = np.arange(N)
+    idx = 0
+    lines = [None] * (DIST_TILE_GROUP_TYPES + 1)
+
+    ADAPT_OPT_LINE_WIDTH = 3.0
+    ADAPT_OPT_MARKER_SIZE = 5.0
+    
+    # GROUP
+    for group_index, group in enumerate(datasets):
+        group_data = []
+
+        # LINE
+        for line_index, line in enumerate(x_values):
+            group_data.append(datasets[group_index][line_index][1])
+
+        LOG.info("%s group_data = %s ", group, str(group_data))
+
+        lines[idx], = ax1.plot(x_values, group_data, color=OPT_LINE_COLORS[idx], linewidth=ADAPT_OPT_LINE_WIDTH,
+                 marker=OPT_MARKERS[idx], markersize=ADAPT_OPT_MARKER_SIZE, label=str(group))
+
+        idx = idx + 1
+
+    # GRID
+    axes = ax1.get_axes()
+    makeGrid(ax1)
+
+    # Y-AXIS
+    ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
+    ax1.minorticks_off()
+    ax1.set_ylabel("Tile Group Count ", fontproperties=LABEL_FP)
+    #ax1.set_yscale('log', basey=10)
+
+    # X-AXIS
+    ax1.set_xlabel("Query Segment", fontproperties=LABEL_FP)
+    major_ticks = np.arange(0, DIST_QUERY_COUNT + 1)
+    ax1.set_xticks(major_ticks)
+
+    #for major_tick in major_ticks[1:-1]:
+    #    ax1.axvline(major_tick, color='0.5', linestyle='dashed', linewidth=ADAPT_OPT_LINE_WIDTH)
+
+    TITLE = "Tile Group Types"
+    LABELS = ("T1", "T2", "T3", "T4", "T5")
+
+    # Clean up list
+    LABELS = LABELS[:DIST_TILE_GROUP_TYPES]
+    
+    # LEGEND
+    ax1.legend(lines, LABELS, prop=LABEL_FP, title = TITLE,
+               loc="upper left", ncol=DIST_TILE_GROUP_TYPES, 
+               shadow=OPT_LEGEND_SHADOW,
+               frameon=False, borderaxespad=0.0, handlelength=2)
+
+    ax1.get_legend().get_title().set_fontproperties(LABEL_FP)
+    ax1.get_legend().get_title().set_position((-50, 0))
 
     return (fig)
 
@@ -1107,7 +1178,7 @@ def adapt_plot():
     for layout in LAYOUTS:
         data_file = ADAPT_DIR + "/" + str(ADAPT_COLUMN_COUNT) + "/" + layout + "/" + "adapt.csv"
 
-        dataset = loadDataFile(QUERY_COUNT, 2, data_file)                    
+        dataset = loadDataFile(QUERY_COUNT, 2, data_file)
         datasets.append(dataset)
 
     fig = create_adapt_line_chart(datasets)
@@ -1123,7 +1194,7 @@ def weight_plot():
     for sample_weight in SAMPLE_WEIGHTS:
         data_file = WEIGHT_DIR + "/" + str(sample_weight) + "/" + "weight.csv"
 
-        dataset = loadDataFile(WEIGHT_QUERY_COUNT, 2, data_file)                    
+        dataset = loadDataFile(WEIGHT_QUERY_COUNT, 2, data_file)
         datasets.append(dataset)
 
     fig = create_weight_line_chart(datasets)
@@ -1137,11 +1208,11 @@ def reorg_plot():
 
     reorg_scale_factor = 1000
     datasets = []
-    
+
     for layout in REORG_LAYOUTS:
         data_file = REORG_DIR + "/" + str(reorg_scale_factor) + "/" + str(layout) + "/" + "reorg.csv"
 
-        dataset = loadDataFile(REORG_QUERY_COUNT, 2, data_file)                    
+        dataset = loadDataFile(REORG_QUERY_COUNT, 2, data_file)
         datasets.append(dataset)
 
     fig = create_reorg_line_chart(datasets)
@@ -1149,6 +1220,22 @@ def reorg_plot():
     fileName = "reorg.pdf"
 
     saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.5)
+    
+# DISTRIBUTION -- PLOT
+def distribution_plot():
+
+    datasets = []
+    for tile_group_type in xrange(0, DIST_TILE_GROUP_TYPES):
+        data_file = DISTRIBUTION_DIR + "/" + str(tile_group_type) + "/" + "distribution.csv"
+
+        dataset = loadDataFile(DIST_QUERY_COUNT, 2, data_file)
+        datasets.append(dataset)
+
+    fig = create_distribution_stack_chart(datasets)
+
+    fileName = "distribution.pdf"
+
+    saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.5)    
 
 ###################################################################################
 # EVAL HELPERS
@@ -1189,36 +1276,42 @@ def collect_stats(result_dir,
         data = line.split()
 
         # Collect info
-        layout = data[0]
-        operator = data[1]
-        selectivity = data[2]
-        projectivity = data[3]
-        column_count = data[4]
-        write_ratio = data[5]
-        subset_experiment_type = data[6]
-        access_num_group = data[7]
-        subset_ratio = data[8]
-        tuples_per_tg = data[9]
-        txn_itr = data[10]
-        theta = data[11]
-        split_point = data[12]
-        sample_weight = data[13]
-        scale_factor = data[14]
-        stat = data[15]
+        if category != DISTRIBUTION_EXPERIMENT:
+            layout = data[0]
+            operator = data[1]
+            selectivity = data[2]
+            projectivity = data[3]
+            column_count = data[4]
+            write_ratio = data[5]
+            subset_experiment_type = data[6]
+            access_num_group = data[7]
+            subset_ratio = data[8]
+            tuples_per_tg = data[9]
+            txn_itr = data[10]
+            theta = data[11]
+            split_point = data[12]
+            sample_weight = data[13]
+            scale_factor = data[14]
+            stat = data[15]
 
-        if(layout == "0"):
-            layout = "row"
-        elif(layout == "1"):
-            layout = "column"
-        elif(layout == "2"):
-            layout = "hybrid"
+            if(layout == "0"):
+                layout = "row"
+            elif(layout == "1"):
+                layout = "column"
+            elif(layout == "2"):
+                layout = "hybrid"
 
-        if(operator == "1"):
-            operator = "direct"
-        elif(operator == "2"):
-            operator = "aggregate"
-        elif(operator == "3"):
-            operator = "arithmetic"
+            if(operator == "1"):
+                operator = "direct"
+            elif(operator == "2"):
+                operator = "aggregate"
+            elif(operator == "3"):
+                operator = "arithmetic"
+        # Dist experiment
+        else:
+            query_itr = data[0]
+            tile_group_type = data[1]
+            tile_group_count = data[2]
 
         # MAKE RESULTS FILE DIR
         if category == PROJECTIVITY_EXPERIMENT or category == SELECTIVITY_EXPERIMENT:
@@ -1238,6 +1331,8 @@ def collect_stats(result_dir,
             result_directory = result_dir + "/" + str(sample_weight)
         elif category == REORG_EXPERIMENT:
             result_directory = result_dir + "/" + str(scale_factor) + "/" + layout
+        elif category == DISTRIBUTION_EXPERIMENT:
+            result_directory = result_dir + "/" + "/" + tile_group_type
 
         if not os.path.exists(result_directory):
             os.makedirs(result_directory)
@@ -1250,8 +1345,8 @@ def collect_stats(result_dir,
             result_file.write(str(projectivity) + " , " + str(stat) + "\n")
         elif category == SELECTIVITY_EXPERIMENT or category == OPERATOR_EXPERIMENT or category == VERTICAL_EXPERIMENT or category == SUBSET_EXPERIMENT:
             result_file.write(str(selectivity) + " , " + str(stat) + "\n")
-        elif category == ADAPT_EXPERIMENT or category == REORG_EXPERIMENT:
-            result_file.write(str(txn_itr) + " , " + str(stat) + "\n")
+        elif category == ADAPT_EXPERIMENT or category == REORG_EXPERIMENT or category == DISTRIBUTION_EXPERIMENT:
+            result_file.write(str(query_itr) + " , " + str(tile_group_count) + "\n")
         elif category == WEIGHT_EXPERIMENT:
             result_file.write(str(txn_itr) + " , " + str(split_point) + "\n")
 
@@ -1385,7 +1480,7 @@ def adapt_eval():
 
     # COLLECT STATS
     collect_stats(ADAPT_DIR, "adapt.csv", ADAPT_EXPERIMENT)
-    
+
 # WEIGHT -- EVAL
 def weight_eval():
 
@@ -1397,7 +1492,7 @@ def weight_eval():
                    TRANSACTION_COUNT, WEIGHT_EXPERIMENT)
 
     # COLLECT STATS
-    collect_stats(WEIGHT_DIR, "weight.csv", WEIGHT_EXPERIMENT)        
+    collect_stats(WEIGHT_DIR, "weight.csv", WEIGHT_EXPERIMENT)
 
 # REORG -- EVAL
 def reorg_eval():
@@ -1410,7 +1505,21 @@ def reorg_eval():
                    TRANSACTION_COUNT, REORG_EXPERIMENT)
 
     # COLLECT STATS
-    collect_stats(REORG_DIR, "reorg.csv", REORG_EXPERIMENT)    
+    collect_stats(REORG_DIR, "reorg.csv", REORG_EXPERIMENT)
+
+# DISTRIBUTION -- EVAL
+def distribution_eval():
+
+    # CLEAN UP RESULT DIR
+    clean_up_dir(DISTRIBUTION_DIR)
+
+    # RUN EXPERIMENT
+    run_experiment(HYADAPT, SCALE_FACTOR,
+                   TRANSACTION_COUNT, DISTRIBUTION_EXPERIMENT)
+
+    # COLLECT STATS
+    collect_stats(DISTRIBUTION_DIR, "distribution.csv", DISTRIBUTION_EXPERIMENT)
+
 
 ###################################################################################
 # MAIN
@@ -1428,6 +1537,7 @@ if __name__ == '__main__':
     parser.add_argument("-z", "--adapt", help='eval adapt', action='store_true')
     parser.add_argument("-w", "--weight", help='eval weight', action='store_true')
     parser.add_argument("-r", "--reorg", help='eval reorg', action='store_true')
+    parser.add_argument("-t", "--distribution", help='eval distribution', action='store_true')
 
     parser.add_argument("-a", "--projectivity_plot", help='plot projectivity', action='store_true')
     parser.add_argument("-b", "--selectivity_plot", help='plot selectivity', action='store_true')
@@ -1438,6 +1548,7 @@ if __name__ == '__main__':
     parser.add_argument("-g", "--adapt_plot", help='plot adapt', action='store_true')
     parser.add_argument("-i", "--weight_plot", help='plot weight', action='store_true')
     parser.add_argument("-j", "--reorg_plot", help='plot reorg', action='store_true')
+    parser.add_argument("-k", "--distribution_plot", help='plot distribution', action='store_true')
 
     args = parser.parse_args()
 
@@ -1494,6 +1605,12 @@ if __name__ == '__main__':
 
     if args.reorg_plot:
         reorg_plot()
+
+    if args.distribution:
+        distribution_eval()
+
+    if args.distribution_plot:
+        distribution_plot()
 
     #create_legend()
     #create_bar_legend()
