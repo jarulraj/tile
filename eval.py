@@ -881,10 +881,13 @@ def create_reorg_line_chart(datasets):
     makeGrid(ax1)
 
     # Y-AXIS
+    YMIN = 100
+    YMAX = 1000000
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
     ax1.set_ylabel("Runtime (ms)", fontproperties=LABEL_FP)
-    #ax1.set_yscale('log', basey=10)
+    ax1.set_ylim((YMIN, YMAX))
+    ax1.set_yscale('log', basey=10)
 
     # X-AXIS
     REORG_INTERVAL = 25
@@ -1132,7 +1135,7 @@ def weight_plot():
 # REORG -- PLOT
 def reorg_plot():
 
-    reorg_scale_factor = 100
+    reorg_scale_factor = 1000
     datasets = []
     
     for layout in REORG_LAYOUTS:
