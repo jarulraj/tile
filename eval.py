@@ -143,7 +143,7 @@ LAYOUTS = ("row", "column", "hybrid")
 OPERATORS = ("direct", "aggregate")
 REORG_LAYOUTS = ("row", "hybrid")
 
-SCALE_FACTOR = 1000.0
+SCALE_FACTOR = 100.0
 
 SELECTIVITY = (0.2, 0.4, 0.6, 0.8, 1.0)
 PROJECTIVITY = (0.01, 0.1, 0.5, 1.0)
@@ -1345,7 +1345,9 @@ def collect_stats(result_dir,
             result_file.write(str(projectivity) + " , " + str(stat) + "\n")
         elif category == SELECTIVITY_EXPERIMENT or category == OPERATOR_EXPERIMENT or category == VERTICAL_EXPERIMENT or category == SUBSET_EXPERIMENT:
             result_file.write(str(selectivity) + " , " + str(stat) + "\n")
-        elif category == ADAPT_EXPERIMENT or category == REORG_EXPERIMENT or category == DISTRIBUTION_EXPERIMENT:
+        elif category == ADAPT_EXPERIMENT or category == REORG_EXPERIMENT:
+            result_file.write(str(txn_itr) + " , " + str(stat) + "\n")
+        elif category == DISTRIBUTION_EXPERIMENT:
             result_file.write(str(query_itr) + " , " + str(tile_group_count) + "\n")
         elif category == WEIGHT_EXPERIMENT:
             result_file.write(str(txn_itr) + " , " + str(split_point) + "\n")
