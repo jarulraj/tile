@@ -138,7 +138,7 @@ WEIGHT_DIR = BASE_DIR + "/results/weight/"
 LAYOUTS = ("row", "column", "hybrid")
 OPERATORS = ("direct", "aggregate")
 
-SCALE_FACTOR = 10.0
+SCALE_FACTOR = 100.0
 
 SELECTIVITY = (0.2, 0.4, 0.6, 0.8, 1.0)
 PROJECTIVITY = (0.01, 0.1, 0.5, 1.0)
@@ -752,9 +752,9 @@ def create_adapt_line_chart(datasets):
     x_mark_offset = x_mark_count/2 - x_mark_count/4
     x_marks = np.arange(0, 1, x_mark_count)
     
-    ADAPT_LABELS = (["Select-L", "Update", "Select-L", "Update",
-                     "Select-H", "Update", "Select-H", "Update",
-                     "Select-L", "Update", "Select-L", "Update"])
+    ADAPT_LABELS = (["Select", "Insert", "Select", "Insert",
+                     "Select", "Insert", "Select", "Insert",
+                     "Select", "Insert", "Select", "Insert"])
     
     for idx, x_mark in enumerate(x_marks):
             ax1.text(x_mark + x_mark_offset, 
@@ -1023,27 +1023,20 @@ def subset_plot():
 # ADAPT -- PLOT
 def adapt_plot():
 
-    column_count_type = 0
-    for column_count in COLUMN_COUNTS:
-        column_count_type = column_count_type + 1
-        datasets = []
+    ADAPT_COLUMN_COUNT = COLUMN_COUNTS[1]
+    datasets = []
 
-        for layout in LAYOUTS:
-            data_file = ADAPT_DIR + "/" + str(column_count) + "/" + layout + "/" + "adapt.csv"
+    for layout in LAYOUTS:
+        data_file = ADAPT_DIR + "/" + str(ADAPT_COLUMN_COUNT) + "/" + layout + "/" + "adapt.csv"
 
-            dataset = loadDataFile(QUERY_COUNT, 2, data_file)                    
-            datasets.append(dataset)
+        dataset = loadDataFile(QUERY_COUNT, 2, data_file)                    
+        datasets.append(dataset)
 
-        fig = create_adapt_line_chart(datasets)
+    fig = create_adapt_line_chart(datasets)
 
-        if column_count_type == 1:
-            table_type = "narrow"
-        else:
-            table_type = "wide"
+    fileName = "adapt.pdf"
 
-        fileName = "adapt-" + table_type + ".pdf"
-
-        saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH * 3, height=OPT_GRAPH_HEIGHT/1.5)
+    saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH * 3, height=OPT_GRAPH_HEIGHT/1.5)
 
 # WEIGHT -- PLOT
 def weight_plot():
