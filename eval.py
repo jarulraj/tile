@@ -98,6 +98,9 @@ TICK_FONT_SIZE = 12
 TINY_FONT_SIZE = 8
 LEGEND_FONT_SIZE = 16
 
+SMALL_LABEL_FONT_SIZE = 10
+SMALL_LEGEND_FONT_SIZE = 12
+
 AXIS_LINEWIDTH = 1.3
 BAR_LINEWIDTH = 1.2
 
@@ -112,6 +115,9 @@ LABEL_FP = FontProperties(style='normal', size=LABEL_FONT_SIZE, weight='bold')
 TICK_FP = FontProperties(style='normal', size=TICK_FONT_SIZE)
 TINY_FP = FontProperties(style='normal', size=TINY_FONT_SIZE)
 LEGEND_FP = FontProperties(style='normal', size=LEGEND_FONT_SIZE, weight='bold')
+
+SMALL_LABEL_FP = FontProperties(style='normal', size=SMALL_LABEL_FONT_SIZE, weight='bold')
+SMALL_LEGEND_FP = FontProperties(style='normal', size=SMALL_LEGEND_FONT_SIZE, weight='bold')
 
 YAXIS_TICKS = 3
 YAXIS_ROUND = 1000.0
@@ -823,12 +829,12 @@ def create_weight_line_chart(datasets):
     YMAX = 200
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
-    ax1.set_ylabel("Split Point", fontproperties=LABEL_FP)
+    ax1.set_ylabel("Split Point", fontproperties=SMALL_LABEL_FP)
     ax1.set_ylim((YMIN, YMAX))
     #ax1.set_yscale('log', basey=10)
 
     # X-AXIS
-    ax1.set_xlabel("Query Sequence", fontproperties=LABEL_FP)
+    ax1.set_xlabel("Query Sequence", fontproperties=SMALL_LABEL_FP)
     major_ticks = np.arange(0, WEIGHT_QUERY_COUNT + 1, REPEAT_WEIGHT_TEST * 2)
     ax1.set_xticks(major_ticks)
 
@@ -839,12 +845,12 @@ def create_weight_line_chart(datasets):
     LABELS = SAMPLE_WEIGHTS
 
     # LEGEND
-    ax1.legend(lines, LABELS, prop=LABEL_FP, title = TITLE,
+    ax1.legend(lines, LABELS, prop=SMALL_LEGEND_FP, title = TITLE,
                loc=0, ncol=2, shadow=OPT_LEGEND_SHADOW,
                frameon=False, borderaxespad=0.0, handlelength=2)
 
-    ax1.get_legend().get_title().set_fontproperties(LABEL_FP)
-    ax1.get_legend().get_title().set_position((-60, 0))
+    ax1.get_legend().get_title().set_fontproperties(SMALL_LEGEND_FP)
+    ax1.get_legend().get_title().set_position((-50, 0))
 
     return (fig)
 
@@ -889,13 +895,13 @@ def create_reorg_line_chart(datasets):
     YMAX = 1000000
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
-    ax1.set_ylabel("Runtime (ms)", fontproperties=LABEL_FP)
+    ax1.set_ylabel("Runtime (ms)", fontproperties=SMALL_LABEL_FP)
     ax1.set_ylim((YMIN, YMAX))
     ax1.set_yscale('log', basey=10)
 
     # X-AXIS
     REORG_INTERVAL = 25
-    ax1.set_xlabel("Query Sequence", fontproperties=LABEL_FP)
+    ax1.set_xlabel("Query Sequence", fontproperties=SMALL_LABEL_FP)
     major_ticks = np.arange(0, REORG_QUERY_COUNT + 1, REORG_INTERVAL)
     ax1.set_xticks(major_ticks)
 
@@ -906,12 +912,12 @@ def create_reorg_line_chart(datasets):
     LABELS = ("Immediate", "Incremental")
 
     # LEGEND
-    ax1.legend(lines, LABELS, prop=LABEL_FP, title = TITLE,
-               loc=0, ncol=2, shadow=OPT_LEGEND_SHADOW,
+    ax1.legend(lines, LABELS, prop=SMALL_LEGEND_FP, title = TITLE,
+               loc="upper left", ncol=2, shadow=OPT_LEGEND_SHADOW,
                frameon=False, borderaxespad=0.0, handlelength=2)
 
-    ax1.get_legend().get_title().set_fontproperties(LABEL_FP)
-    ax1.get_legend().get_title().set_position((0, 0))
+    ax1.get_legend().get_title().set_fontproperties(SMALL_LEGEND_FP)
+    ax1.get_legend().get_title().set_position((-50, 0))
 
     return (fig)
 
@@ -957,11 +963,11 @@ def create_distribution_stack_chart(datasets):
     # Y-AXIS
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
-    ax1.set_ylabel("Tile Group Count ", fontproperties=LABEL_FP)
+    ax1.set_ylabel("Tile Group Count ", fontproperties=SMALL_LABEL_FP)
     #ax1.set_yscale('log', basey=10)
 
     # X-AXIS
-    ax1.set_xlabel("Query Segment", fontproperties=LABEL_FP)
+    ax1.set_xlabel("Query Segment", fontproperties=SMALL_LABEL_FP)
     major_ticks = np.arange(0, DIST_QUERY_COUNT + 1)
     ax1.set_xticks(major_ticks)
 
@@ -975,13 +981,13 @@ def create_distribution_stack_chart(datasets):
     LABELS = LABELS[:DIST_TILE_GROUP_TYPES]
     
     # LEGEND
-    ax1.legend(lines, LABELS, prop=LABEL_FP, title = TITLE,
+    ax1.legend(lines, LABELS, prop=SMALL_LEGEND_FP, title = TITLE,
                loc="upper left", ncol=DIST_TILE_GROUP_TYPES, 
                shadow=OPT_LEGEND_SHADOW,
                frameon=False, borderaxespad=0.0, handlelength=2)
 
-    ax1.get_legend().get_title().set_fontproperties(LABEL_FP)
-    ax1.get_legend().get_title().set_position((-10, 0))
+    ax1.get_legend().get_title().set_fontproperties(SMALL_LEGEND_FP)
+    ax1.get_legend().get_title().set_position((-20, 0))
 
     return (fig)
 
