@@ -183,7 +183,7 @@ REPEAT_WEIGHT_TEST = 1000
 WEIGHT_QUERY_COUNT = NUM_WEIGHT_TEST * REPEAT_WEIGHT_TEST
 
 REORG_QUERY_COUNT = 25 * 4
-DIST_QUERY_COUNT = 12
+DIST_QUERY_COUNT = 13
 
 PROJECTIVITY_EXPERIMENT = 1
 SELECTIVITY_EXPERIMENT = 2
@@ -926,7 +926,7 @@ def create_distribution_stack_chart(datasets):
     ax1 = fig.add_subplot(111)
 
     # X-AXIS
-    x_values = list(xrange(1, DIST_QUERY_COUNT + 1))
+    x_values = list(xrange(0, DIST_QUERY_COUNT))
     N = len(x_values)
     x_labels = x_values
 
@@ -968,7 +968,7 @@ def create_distribution_stack_chart(datasets):
 
     # X-AXIS
     ax1.set_xlabel("Query Segment", fontproperties=SMALL_LABEL_FP)
-    major_ticks = np.arange(0, DIST_QUERY_COUNT + 1)
+    major_ticks = np.arange(0, DIST_QUERY_COUNT, 1)
     ax1.set_xticks(major_ticks)
 
     #for major_tick in major_ticks[1:-1]:
