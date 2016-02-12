@@ -144,6 +144,7 @@ ADAPT_DIR = BASE_DIR + "/results/adapt/"
 WEIGHT_DIR = BASE_DIR + "/results/weight/"
 REORG_DIR = BASE_DIR + "/results/reorg/"
 DISTRIBUTION_DIR = BASE_DIR + "/results/distribution/"
+JOIN_DIR = BASE_DIR + "/results/join/"
 
 LAYOUTS = ("row", "column", "hybrid")
 OPERATORS = ("direct", "aggregate")
@@ -194,6 +195,7 @@ ADAPT_EXPERIMENT = 6
 WEIGHT_EXPERIMENT = 7
 REORG_EXPERIMENT = 8
 DISTRIBUTION_EXPERIMENT = 9
+JOIN_EXPERIMENT = 10
 
 YCSB_EXPERIMENT = 1
 
@@ -1246,6 +1248,35 @@ def distribution_plot():
 
     saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.5)    
 
+# JOIN -- PLOT
+def join_plot():
+
+    operator = "join"
+    
+    column_count_type = 0
+    for column_count in COLUMN_COUNTS:
+        column_count_type = column_count_type + 1
+
+        print(operator)
+        datasets = []
+
+        for layout in LAYOUTS:
+            data_file = JOIN_DIR + "/" + layout + "/" + operator + "/" + str(column_count) + "/" + "join.csv"
+
+            dataset = loadDataFile(4, 2, data_file)
+            datasets.append(dataset)
+
+        fig = create_projectivity_bar_chart(datasets)
+
+        if column_count_type == 1:
+            table_type = "narrow"
+        else:
+            table_type = "wide"
+
+        fileName = "join-" + table_type + ".pdf"
+
+        saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
+
 ###################################################################################
 # EVAL HELPERS
 ###################################################################################
@@ -1316,6 +1347,9 @@ def collect_stats(result_dir,
                 operator = "aggregate"
             elif(operator == "3"):
                 operator = "arithmetic"
+            elif(operator == "4"):
+                operator = "join"
+
         # Dist experiment
         else:
             query_itr = data[0]
@@ -1342,6 +1376,8 @@ def collect_stats(result_dir,
             result_directory = result_dir + "/" + str(scale_factor) + "/" + layout
         elif category == DISTRIBUTION_EXPERIMENT:
             result_directory = result_dir + "/" + "/" + tile_group_type
+        elif category == JOIN_EXPERIMENT:
+            result_directory = result_dir + "/" + layout + "/" + operator + "/" + column_count
 
         if not os.path.exists(result_directory):
             os.makedirs(result_directory)
@@ -1350,7 +1386,7 @@ def collect_stats(result_dir,
         result_file = open(file_name, "a")
 
         # WRITE OUT STATS
-        if category == PROJECTIVITY_EXPERIMENT:
+        if category == PROJECTIVITY_EXPERIMENT or category == JOIN_EXPERIMENT:
             result_file.write(str(projectivity) + " , " + str(stat) + "\n")
         elif category == SELECTIVITY_EXPERIMENT or category == OPERATOR_EXPERIMENT or category == VERTICAL_EXPERIMENT or category == SUBSET_EXPERIMENT:
             result_file.write(str(selectivity) + " , " + str(stat) + "\n")
@@ -1531,6 +1567,18 @@ def distribution_eval():
     # COLLECT STATS
     collect_stats(DISTRIBUTION_DIR, "distribution.csv", DISTRIBUTION_EXPERIMENT)
 
+# JOIN -- EVAL
+def join_eval():
+
+    # CLEAN UP RESULT DIR
+    clean_up_dir(JOIN_DIR)
+
+    # RUN EXPERIMENT
+    run_experiment(HYADAPT, SCALE_FACTOR,
+                   TRANSACTION_COUNT, JOIN_EXPERIMENT)
+
+    # COLLECT STATS
+    collect_stats(JOIN_DIR, "join.csv", JOIN_EXPERIMENT)
 
 ###################################################################################
 # MAIN
@@ -1549,6 +1597,7 @@ if __name__ == '__main__':
     parser.add_argument("-w", "--weight", help='eval weight', action='store_true')
     parser.add_argument("-r", "--reorg", help='eval reorg', action='store_true')
     parser.add_argument("-t", "--distribution", help='eval distribution', action='store_true')
+    parser.add_argument("-x", "--join", help='eval join', action='store_true')
 
     parser.add_argument("-a", "--projectivity_plot", help='plot projectivity', action='store_true')
     parser.add_argument("-b", "--selectivity_plot", help='plot selectivity', action='store_true')
@@ -1560,8 +1609,11 @@ if __name__ == '__main__':
     parser.add_argument("-i", "--weight_plot", help='plot weight', action='store_true')
     parser.add_argument("-j", "--reorg_plot", help='plot reorg', action='store_true')
     parser.add_argument("-k", "--distribution_plot", help='plot distribution', action='store_true')
+    parser.add_argument("-l", "--join_plot", help='plot join', action='store_true')
 
     args = parser.parse_args()
+
+    ## EVAL
 
     if args.projectivity:
         projectivity_eval()
@@ -1622,6 +1674,12 @@ if __name__ == '__main__':
 
     if args.distribution_plot:
         distribution_plot()
+
+    if args.join:
+        join_eval()
+
+    if args.join_plot:
+        join_plot()
 
     #create_legend()
     #create_bar_legend()
