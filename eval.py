@@ -70,7 +70,7 @@ OPT_GRAPH_WIDTH = 400
 # to match the length of your data.
 
 NUM_COLORS = 5
-COLOR_MAP = ( '#F58A87', '#80CA86', '#9EC9E9', '#CFAB86', '#D89761' )
+COLOR_MAP = ( '#F58A87', '#80CA86', '#4F7E89', '#CFAB86', '#6167D8' )
 
 
 #COLOR_MAP = ('#F15854', '#9C9F84', '#F7DCB4', '#991809', '#5C755E', '#A97D5D')
@@ -168,7 +168,7 @@ OP_SELECTIVITY = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
 
 COLUMN_COUNTS = (50, 200)
 WRITE_RATIOS = (0, 0.1)
-TUPLES_PER_TILEGROUP = (10, 100, 1000, 10000, 100000)
+TUPLES_PER_TILEGROUP = (100, 1000, 10000, 100000)
 NUM_GROUPS = 5
 
 THETAS = (0, 0.5)
@@ -313,7 +313,7 @@ def create_vertical_legend():
     fig = pylab.figure()
     ax1 = fig.add_subplot(111)
 
-    figlegend = pylab.figure(figsize=(11, 0.5))
+    figlegend = pylab.figure(figsize=(12, 0.5))
 
     num_items = len(LAYOUTS);
     ind = np.arange(1)
@@ -339,11 +339,11 @@ def create_vertical_legend():
 
 
     TITLE = "Tuples Per Tile Group : "
-    LABELS = [TITLE, 10, 100, 1000, 10000]
+    LABELS = [TITLE, 100, 1000, 10000, 100000]
 
     # LEGEND
     figlegend.legend(bars, LABELS, prop=LEGEND_FP,
-                     loc=1, ncol=5,
+                     loc=1, ncol=6,
                      mode="expand", shadow=OPT_LEGEND_SHADOW,
                      frameon=False, borderaxespad=0.0,
                      handleheight=1.5, handlelength=4)
