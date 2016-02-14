@@ -1691,18 +1691,23 @@ def caching_eval():
     split_point = "0"
     sample_weight = "0"
     duration = "0"
+
+    DEFAULT_TUPLES_PER_TILEGROUP = 1000
+    total_tuple_count = SCALE_FACTOR * DEFAULT_TUPLES_PER_TILEGROUP
     
     for column_count in COLUMN_COUNTS:
         for write_ratio in WRITE_RATIOS:
             for selectivity in SELECTIVITY:
                 for tuples_per_tilegroup in TUPLES_PER_TILEGROUP:
-                                                            
+                                      
+                    scale_factor = total_tuple_count / tuples_per_tilegroup
+                                         
                     # RUN EXPERIMENT
                     p = subprocess.Popen([PERF, "stat",
                                      "-e", "task-clock,cycles,instructions,cache-references,cache-misses",
                                      HYADAPT,
                                      "-o", str(DIRECT_TEST),
-                                     "-k", str(SCALE_FACTOR),
+                                     "-k", str(scale_factor),
                                      "-t", str(TRANSACTION_COUNT),
                                      "-c", str(column_count),
                                      "-w", str(write_ratio),
