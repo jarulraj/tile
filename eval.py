@@ -168,7 +168,7 @@ OP_SELECTIVITY = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
 
 COLUMN_COUNTS = (50, 200)
 WRITE_RATIOS = (0, 0.1)
-TUPLES_PER_TILEGROUP = (10, 100, 1000, 10000)
+TUPLES_PER_TILEGROUP = (10, 100, 1000, 10000, 100000)
 NUM_GROUPS = 5
 
 THETAS = (0, 0.5)
@@ -1675,10 +1675,8 @@ def caching_eval():
 
     # cleanup
     subprocess.call(["rm -f " + OUTPUT_FILE], shell=True)
-
-    # open file
-    target = open(OUTPUT_FILE, 'w')
     
+   
     DIRECT_TEST = "1"
     layout_mode = "2"
     operator_type = "1"
@@ -1695,6 +1693,7 @@ def caching_eval():
     DEFAULT_TUPLES_PER_TILEGROUP = 1000
     total_tuple_count = SCALE_FACTOR * DEFAULT_TUPLES_PER_TILEGROUP
     
+    content = ""
     for column_count in COLUMN_COUNTS:
         for write_ratio in WRITE_RATIOS:
             for selectivity in SELECTIVITY:
@@ -1726,12 +1725,14 @@ def caching_eval():
                     cache_misses_count = cache_misses_count.replace(',', '')
 
                     # build line      
-                    line = layout_mode + " " + operator_type + " " + str(selectivity) + " " + projectivity + " " + str(column_count) + " " + str(write_ratio) + " " + subset_experiment_type + " " + access_num_groups + " " + subset_ratio + " " + str(tuples_per_tilegroup) + " " + query_itr + " " + theta + " " + split_point + " " + sample_weight + " " + str(SCALE_FACTOR) + " " + cache_misses_count                           
+                    line = layout_mode + " " + operator_type + " " + str(selectivity) + " " + projectivity + " " + str(column_count) + " " + str(write_ratio) + " " + subset_experiment_type + " " + access_num_groups + " " + subset_ratio + " " + str(tuples_per_tilegroup) + " " + query_itr + " " + theta + " " + split_point + " " + sample_weight + " " + str(SCALE_FACTOR) + " " + cache_misses_count 
                     print(line)
-                    
-                    target.write(line + "\n")
 
-    # close file
+                    content = content + line + "\n"
+
+    # write to file
+    target = open(OUTPUT_FILE, 'w')
+    target.write(content)
     target.close()
 
     # COLLECT STATS
