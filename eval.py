@@ -131,6 +131,7 @@ BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 PELOTON_BUILD_DIR = BASE_DIR + "/../peloton/build"
 HYADAPT = PELOTON_BUILD_DIR + "/src/hyadapt"
 YCSB = PELOTON_BUILD_DIR + "/src/ycsb"
+PERF = "/usr/bin/perf_3.9.0-7"
 
 OUTPUT_FILE = "outputfile.summary"
 
@@ -1691,15 +1692,13 @@ def caching_eval():
     sample_weight = "0"
     duration = "0"
     
-    SCALE_FACTOR = 1.0
-    
     for column_count in COLUMN_COUNTS:
         for write_ratio in WRITE_RATIOS:
             for selectivity in SELECTIVITY:
                 for tuples_per_tilegroup in TUPLES_PER_TILEGROUP:
                                                             
                     # RUN EXPERIMENT
-                    p = subprocess.Popen(["perf", "stat",
+                    p = subprocess.Popen([PERF, "stat",
                                      "-e", "task-clock,cycles,instructions,cache-references,cache-misses",
                                      HYADAPT,
                                      "-o", str(DIRECT_TEST),
@@ -1716,9 +1715,11 @@ def caching_eval():
 
                     split_list = err.split('\n');
                     cache_misses_line = split_list[7]
+                    cache_misses_line = cache_misses_line.lstrip()
                     cache_misses_list = cache_misses_line.split(' ')
-                    cache_misses_count = cache_misses_list[3]
-                       
+                    cache_misses_count = cache_misses_list[0]
+                    cache_misses_count = cache_misses_count.replace(',', '')
+
                     # build line      
                     line = layout_mode + " " + operator_type + " " + str(selectivity) + " " + projectivity + " " + str(column_count) + " " + str(write_ratio) + " " + subset_experiment_type + " " + access_num_groups + " " + subset_ratio + " " + str(tuples_per_tilegroup) + " " + query_itr + " " + theta + " " + split_point + " " + sample_weight + " " + str(SCALE_FACTOR) + " " + cache_misses_count                           
                     print(line)
