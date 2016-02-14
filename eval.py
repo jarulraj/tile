@@ -145,6 +145,7 @@ WEIGHT_DIR = BASE_DIR + "/results/weight/"
 REORG_DIR = BASE_DIR + "/results/reorg/"
 DISTRIBUTION_DIR = BASE_DIR + "/results/distribution/"
 JOIN_DIR = BASE_DIR + "/results/join/"
+CACHING_DIR = BASE_DIR + "/results/caching/"
 
 LAYOUTS = ("row", "column", "hybrid")
 OPERATORS = ("direct", "aggregate")
@@ -196,6 +197,7 @@ WEIGHT_EXPERIMENT = 7
 REORG_EXPERIMENT = 8
 DISTRIBUTION_EXPERIMENT = 9
 JOIN_EXPERIMENT = 10
+CACHING_EXPERIMENT = 11
 
 YCSB_EXPERIMENT = 1
 
@@ -522,6 +524,57 @@ def create_vertical_line_chart(datasets):
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
     ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
+    #ax1.set_yscale('log', basey=10)
+
+    # X-AXIS
+    XAXIS_MIN = 0.1
+    XAXIS_MAX = 1.1
+    ax1.set_xlabel("Fraction of Tuples Selected", fontproperties=LABEL_FP)
+    ax1.set_xlim([XAXIS_MIN, XAXIS_MAX])
+
+    for label in ax1.get_yticklabels() :
+        label.set_fontproperties(TICK_FP)
+    for label in ax1.get_xticklabels() :
+        label.set_fontproperties(TICK_FP)
+
+    return (fig)
+
+def create_caching_line_chart(datasets):
+    fig = plot.figure()
+    ax1 = fig.add_subplot(111)
+
+    # X-AXIS
+    x_values = SELECTIVITY
+    N = len(x_values)
+    x_labels = x_values
+
+    num_items = len(TUPLES_PER_TILEGROUP);
+    ind = np.arange(N)
+    idx = 0
+
+    # GROUP
+    for group_index, group in enumerate(TUPLES_PER_TILEGROUP):
+        group_data = []
+
+        # LINE
+        for line_index, line in enumerate(x_values):
+            group_data.append(datasets[group_index][line_index][1])
+
+        LOG.info("%s group_data = %s ", group, str(group_data))
+
+        ax1.plot(x_values, group_data, color=OPT_LINE_COLORS[idx], linewidth=OPT_LINE_WIDTH,
+                 marker=OPT_MARKERS[idx], markersize=OPT_MARKER_SIZE, label=str(group))
+
+        idx = idx + 1
+
+    # GRID
+    axes = ax1.get_axes()
+    makeGrid(ax1)
+
+    # Y-AXIS
+    ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
+    ax1.minorticks_off()
+    ax1.set_ylabel("Cache Misses", fontproperties=LABEL_FP)
     #ax1.set_yscale('log', basey=10)
 
     # X-AXIS
@@ -1277,6 +1330,39 @@ def join_plot():
 
         saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
 
+# CACHING -- PLOT
+def caching_plot():
+
+    column_count_type = 0
+    for column_count in COLUMN_COUNTS:
+        column_count_type = column_count_type + 1
+
+        for write_ratio in WRITE_RATIOS:
+            datasets = []
+
+            for tuples_per_tg in TUPLES_PER_TILEGROUP:
+
+                data_file = CACHING_DIR + "/" + str(tuples_per_tg) + "/" + str(column_count) + "/" + str(write_ratio) + "/" + "caching.csv"
+
+                dataset = loadDataFile(10, 2, data_file)
+                datasets.append(dataset)
+
+            fig = create_caching_line_chart(datasets)
+
+            if write_ratio == 0:
+                write_mix = "rd"
+            else:
+                write_mix = "rw"
+
+            if column_count_type == 1:
+                table_type = "narrow"
+            else:
+                table_type = "wide"
+
+            fileName = "caching-" + table_type + "-" + write_mix + ".pdf"
+
+            saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
+
 ###################################################################################
 # EVAL HELPERS
 ###################################################################################
@@ -1333,7 +1419,7 @@ def collect_stats(result_dir,
             sample_weight = data[13]
             scale_factor = data[14]
             stat = data[15]
-
+            
             if(layout == "0"):
                 layout = "row"
             elif(layout == "1"):
@@ -1361,7 +1447,7 @@ def collect_stats(result_dir,
             result_directory = result_dir + "/" + layout + "/" + operator + "/" + column_count + "/" + write_ratio
         elif category == OPERATOR_EXPERIMENT:
             result_directory = result_dir + "/" + layout + "/" + str(projectivity) + "/" + column_count + "/" + write_ratio
-        elif category == VERTICAL_EXPERIMENT:
+        elif category == VERTICAL_EXPERIMENT or category == CACHING_EXPERIMENT:
             result_directory = result_dir + "/" + str(tuples_per_tg) + "/" + column_count + "/" + write_ratio
         elif category == SUBSET_EXPERIMENT:
             if subset_experiment_type == SUBSET_SINGLE_GROUP_EXPERIMENT:
@@ -1388,7 +1474,7 @@ def collect_stats(result_dir,
         # WRITE OUT STATS
         if category == PROJECTIVITY_EXPERIMENT or category == JOIN_EXPERIMENT:
             result_file.write(str(projectivity) + " , " + str(stat) + "\n")
-        elif category == SELECTIVITY_EXPERIMENT or category == OPERATOR_EXPERIMENT or category == VERTICAL_EXPERIMENT or category == SUBSET_EXPERIMENT:
+        elif category == SELECTIVITY_EXPERIMENT or category == OPERATOR_EXPERIMENT or category == VERTICAL_EXPERIMENT or category == SUBSET_EXPERIMENT or category == CACHING_EXPERIMENT:
             result_file.write(str(selectivity) + " , " + str(stat) + "\n")
         elif category == ADAPT_EXPERIMENT or category == REORG_EXPERIMENT:
             result_file.write(str(txn_itr) + " , " + str(stat) + "\n")
@@ -1579,6 +1665,72 @@ def join_eval():
 
     # COLLECT STATS
     collect_stats(JOIN_DIR, "join.csv", JOIN_EXPERIMENT)
+    
+# CACHING -- EVAL
+def caching_eval():
+
+    # CLEAN UP RESULT DIR
+    clean_up_dir(CACHING_DIR)
+
+    # cleanup
+    subprocess.call(["rm -f " + OUTPUT_FILE], shell=True)
+
+    # open file
+    target = open(OUTPUT_FILE, 'w')
+    
+    DIRECT_TEST = "1"
+    layout_mode = "2"
+    operator_type = "1"
+    projectivity = "0.1"
+    subset_experiment_type = "0"
+    access_num_groups = "1"
+    subset_ratio = "1"
+    query_itr = "1"
+    theta = "0"
+    split_point = "0"
+    sample_weight = "0"
+    duration = "0"
+    
+    SCALE_FACTOR = 1.0
+    
+    for column_count in COLUMN_COUNTS:
+        for write_ratio in WRITE_RATIOS:
+            for selectivity in SELECTIVITY:
+                for tuples_per_tilegroup in TUPLES_PER_TILEGROUP:
+                                                            
+                    # RUN EXPERIMENT
+                    p = subprocess.Popen(["perf", "stat",
+                                     "-e", "task-clock,cycles,instructions,cache-references,cache-misses",
+                                     HYADAPT,
+                                     "-o", str(DIRECT_TEST),
+                                     "-k", str(SCALE_FACTOR),
+                                     "-t", str(TRANSACTION_COUNT),
+                                     "-c", str(column_count),
+                                     "-w", str(write_ratio),
+                                     "-s", str(selectivity),
+                                     "-g", str(tuples_per_tilegroup)], 
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE)
+                                     
+                    out, err = p.communicate()
+
+                    split_list = err.split('\n');
+                    cache_misses_line = split_list[7]
+                    cache_misses_list = cache_misses_line.split(' ')
+                    cache_misses_count = cache_misses_list[3]
+                       
+                    # build line      
+                    line = layout_mode + " " + operator_type + " " + str(selectivity) + " " + projectivity + " " + str(column_count) + " " + str(write_ratio) + " " + subset_experiment_type + " " + access_num_groups + " " + subset_ratio + " " + str(tuples_per_tilegroup) + " " + query_itr + " " + theta + " " + split_point + " " + sample_weight + " " + str(SCALE_FACTOR) + " " + cache_misses_count                           
+                    print(line)
+                    
+                    target.write(line + "\n")
+
+    # close file
+    target.close()
+
+    # COLLECT STATS
+    collect_stats(CACHING_DIR, "caching.csv", CACHING_EXPERIMENT)
+
 
 ###################################################################################
 # MAIN
@@ -1598,6 +1750,7 @@ if __name__ == '__main__':
     parser.add_argument("-r", "--reorg", help='eval reorg', action='store_true')
     parser.add_argument("-t", "--distribution", help='eval distribution', action='store_true')
     parser.add_argument("-x", "--join", help='eval join', action='store_true')
+    parser.add_argument("-q", "--caching", help='eval caching', action='store_true')
 
     parser.add_argument("-a", "--projectivity_plot", help='plot projectivity', action='store_true')
     parser.add_argument("-b", "--selectivity_plot", help='plot selectivity', action='store_true')
@@ -1610,6 +1763,7 @@ if __name__ == '__main__':
     parser.add_argument("-j", "--reorg_plot", help='plot reorg', action='store_true')
     parser.add_argument("-k", "--distribution_plot", help='plot distribution', action='store_true')
     parser.add_argument("-l", "--join_plot", help='plot join', action='store_true')
+    parser.add_argument("-m", "--caching_plot", help='plot caching', action='store_true')
 
     args = parser.parse_args()
 
@@ -1680,6 +1834,12 @@ if __name__ == '__main__':
 
     if args.join_plot:
         join_plot()
+
+    if args.caching:
+        caching_eval()
+
+    if args.caching_plot:
+        caching_plot()
 
     #create_legend()
     #create_bar_legend()
