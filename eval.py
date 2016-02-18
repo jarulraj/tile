@@ -70,7 +70,7 @@ OPT_GRAPH_WIDTH = 400
 # to match the length of your data.
 
 NUM_COLORS = 5
-COLOR_MAP = ( '#F58A87', '#80CA86', '#4F7E89', '#CFAB86', '#6167D8' )
+COLOR_MAP = ( '#F58A87', '#80CA86', '#9EC9E9', '#FED113', '#D89761' )
 
 
 #COLOR_MAP = ('#F15854', '#9C9F84', '#F7DCB4', '#991809', '#5C755E', '#A97D5D')
