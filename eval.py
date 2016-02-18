@@ -147,10 +147,12 @@ REORG_DIR = BASE_DIR + "/results/reorg/"
 DISTRIBUTION_DIR = BASE_DIR + "/results/distribution/"
 JOIN_DIR = BASE_DIR + "/results/join/"
 CACHING_DIR = BASE_DIR + "/results/caching/"
+HYRISE_DIR = BASE_DIR + "/results/hyrise/"
 
 LAYOUTS = ("row", "column", "hybrid")
 OPERATORS = ("direct", "aggregate")
 REORG_LAYOUTS = ("row", "hybrid")
+HYRISE_LAYOUTS = ["row", "hybrid"]
 
 SCALE_FACTOR = 1000.0
 
@@ -178,7 +180,11 @@ TRANSACTION_COUNT = 3
 
 NUM_ADAPT_TESTS = 12
 REPEAT_ADAPT_TEST = 25
-QUERY_COUNT = NUM_ADAPT_TESTS * REPEAT_ADAPT_TEST
+ADAPT_QUERY_COUNT = NUM_ADAPT_TESTS * REPEAT_ADAPT_TEST
+
+NUM_HYRISE_TESTS = 4
+REPEAT_HYRISE_TEST = 50
+HYRISE_QUERY_COUNT = NUM_HYRISE_TESTS * REPEAT_HYRISE_TEST
 
 SAMPLE_WEIGHTS = (0.0001, 0.001, 0.01, 0.1)
 NUM_WEIGHT_TEST = 10
@@ -199,6 +205,7 @@ REORG_EXPERIMENT = 8
 DISTRIBUTION_EXPERIMENT = 9
 JOIN_EXPERIMENT = 10
 CACHING_EXPERIMENT = 11
+HYRISE_EXPERIMENT = 13
 
 YCSB_EXPERIMENT = 1
 
@@ -775,7 +782,7 @@ def create_adapt_line_chart(datasets):
     ax1 = fig.add_subplot(111)
 
     # X-AXIS
-    x_values = list(xrange(1, QUERY_COUNT + 1))
+    x_values = list(xrange(1, ADAPT_QUERY_COUNT + 1))
     N = len(x_values)
     x_labels = x_values
 
@@ -813,7 +820,7 @@ def create_adapt_line_chart(datasets):
 
     # X-AXIS
     ax1.set_xlabel("Query Sequence", fontproperties=LABEL_FP)
-    major_ticks = np.arange(0, QUERY_COUNT + 1, REPEAT_ADAPT_TEST)
+    major_ticks = np.arange(0, ADAPT_QUERY_COUNT + 1, REPEAT_ADAPT_TEST)
     ax1.set_xticks(major_ticks)
 
     #for major_tick in major_ticks[1:-1]:
@@ -833,6 +840,77 @@ def create_adapt_line_chart(datasets):
             ax1.text(x_mark + x_mark_offset,
                      y_mark,
                      ADAPT_LABELS[idx],
+                     transform=ax1.transAxes,
+                     bbox=dict(facecolor='skyblue', alpha=0.5))
+
+    for label in ax1.get_yticklabels() :
+        label.set_fontproperties(TICK_FP)
+    for label in ax1.get_xticklabels() :
+        label.set_fontproperties(TICK_FP)
+
+    return (fig)
+
+def create_hyrise_line_chart(datasets):
+    fig = plot.figure()
+    ax1 = fig.add_subplot(111)
+
+    # X-AXIS
+    x_values = list(xrange(1, HYRISE_QUERY_COUNT + 1))
+    N = len(x_values)
+    x_labels = x_values
+
+    num_items = len(HYRISE_LAYOUTS);
+    ind = np.arange(N)
+    idx = 0
+
+    ADAPT_OPT_LINE_WIDTH = 3.0
+    ADAPT_OPT_MARKER_SIZE = 5.0
+
+    # GROUP
+    for group_index, group in enumerate(HYRISE_LAYOUTS):
+        group_data = []
+
+        # LINE
+        for line_index, line in enumerate(x_values):
+            group_data.append(datasets[group_index][line_index][1])
+
+        LOG.info("%s group_data = %s ", group, str(group_data))
+
+        ax1.plot(x_values, group_data, color=OPT_LINE_COLORS[idx], linewidth=ADAPT_OPT_LINE_WIDTH,
+                 marker=OPT_MARKERS[idx], markersize=ADAPT_OPT_MARKER_SIZE, label=str(group))
+
+        idx = idx + 1
+
+    # GRID
+    axes = ax1.get_axes()
+    makeGrid(ax1)
+
+    # Y-AXIS
+    ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
+    ax1.minorticks_off()
+    ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
+    #ax1.set_yscale('log', basey=10)
+
+    # X-AXIS
+    ax1.set_xlabel("Query Sequence", fontproperties=LABEL_FP)
+    major_ticks = np.arange(0, HYRISE_QUERY_COUNT + 1, REPEAT_HYRISE_TEST)
+    ax1.set_xticks(major_ticks)
+
+    #for major_tick in major_ticks[1:-1]:
+    #    ax1.axvline(major_tick, color='0.5', linestyle='dashed', linewidth=ADAPT_OPT_LINE_WIDTH)
+
+    # LABELS
+    y_mark = 0.9
+    x_mark_count = 1.0/NUM_HYRISE_TESTS
+    x_mark_offset = x_mark_count/2 - x_mark_count/4
+    x_marks = np.arange(0, 1, x_mark_count)
+
+    HYRISE_LABELS = (["Select-H", "Select-L", "Select-H", "Select-L"])
+
+    for idx, x_mark in enumerate(x_marks):
+            ax1.text(x_mark + x_mark_offset,
+                     y_mark,
+                     HYRISE_LABELS[idx],
                      transform=ax1.transAxes,
                      bbox=dict(facecolor='skyblue', alpha=0.5))
 
@@ -993,7 +1071,7 @@ def create_distribution_stack_chart(datasets):
 
     ADAPT_OPT_LINE_WIDTH = 3.0
     ADAPT_OPT_MARKER_SIZE = 5.0
-    
+
     # GROUP
     for group_index, group in enumerate(datasets):
         group_data = []
@@ -1035,10 +1113,10 @@ def create_distribution_stack_chart(datasets):
 
     # Clean up list
     LABELS = LABELS[:DIST_TILE_GROUP_TYPES]
-    
+
     # LEGEND
     ax1.legend(lines, LABELS, prop=SMALL_LEGEND_FP, title = TITLE,
-               loc="upper left", ncol=DIST_TILE_GROUP_TYPES, 
+               loc="upper left", ncol=DIST_TILE_GROUP_TYPES,
                shadow=OPT_LEGEND_SHADOW,
                frameon=False, borderaxespad=0.0, handlelength=2)
 
@@ -1243,7 +1321,7 @@ def adapt_plot():
     for layout in LAYOUTS:
         data_file = ADAPT_DIR + "/" + str(ADAPT_COLUMN_COUNT) + "/" + layout + "/" + "adapt.csv"
 
-        dataset = loadDataFile(QUERY_COUNT, 2, data_file)
+        dataset = loadDataFile(ADAPT_QUERY_COUNT, 2, data_file)
         datasets.append(dataset)
 
     fig = create_adapt_line_chart(datasets)
@@ -1285,7 +1363,7 @@ def reorg_plot():
     fileName = "reorg.pdf"
 
     saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.5)
-    
+
 # DISTRIBUTION -- PLOT
 def distribution_plot():
 
@@ -1300,13 +1378,13 @@ def distribution_plot():
 
     fileName = "distribution.pdf"
 
-    saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.5)    
+    saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.5)
 
 # JOIN -- PLOT
 def join_plot():
 
     operator = "join"
-    
+
     column_count_type = 0
     for column_count in COLUMN_COUNTS:
         column_count_type = column_count_type + 1
@@ -1364,6 +1442,24 @@ def caching_plot():
 
             saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
 
+# HYRISE -- PLOT
+def hyrise_plot():
+
+    HYRISE_COLUMN_COUNT = COLUMN_COUNTS[1]
+    datasets = []
+
+    for layout in HYRISE_LAYOUTS:
+        data_file = HYRISE_DIR + "/" + str(HYRISE_COLUMN_COUNT) + "/" + layout + "/" + "hyrise.csv"
+
+        dataset = loadDataFile(HYRISE_QUERY_COUNT, 2, data_file)
+        datasets.append(dataset)
+
+    fig = create_hyrise_line_chart(datasets)
+
+    fileName = "hyrise.pdf"
+
+    saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH * 3, height=OPT_GRAPH_HEIGHT/1.5)
+
 ###################################################################################
 # EVAL HELPERS
 ###################################################################################
@@ -1420,7 +1516,7 @@ def collect_stats(result_dir,
             sample_weight = data[13]
             scale_factor = data[14]
             stat = data[15]
-            
+
             if(layout == "0"):
                 layout = "row"
             elif(layout == "1"):
@@ -1455,7 +1551,7 @@ def collect_stats(result_dir,
                 result_directory = result_dir + "/" + str(subset_experiment_type) + "/" + str(subset_ratio)
             elif subset_experiment_type == SUBSET_MULTIPLE_GROUP_EXPERIMENT:
                 result_directory = result_dir + "/" + str(subset_experiment_type) + "/" + str(access_num_group)
-        elif category == ADAPT_EXPERIMENT:
+        elif category == ADAPT_EXPERIMENT or category == HYRISE_EXPERIMENT:
             result_directory = result_dir + "/" + column_count + "/" + layout
         elif category == WEIGHT_EXPERIMENT:
             result_directory = result_dir + "/" + str(sample_weight)
@@ -1477,7 +1573,7 @@ def collect_stats(result_dir,
             result_file.write(str(projectivity) + " , " + str(stat) + "\n")
         elif category == SELECTIVITY_EXPERIMENT or category == OPERATOR_EXPERIMENT or category == VERTICAL_EXPERIMENT or category == SUBSET_EXPERIMENT or category == CACHING_EXPERIMENT:
             result_file.write(str(selectivity) + " , " + str(stat) + "\n")
-        elif category == ADAPT_EXPERIMENT or category == REORG_EXPERIMENT:
+        elif category == ADAPT_EXPERIMENT or category == REORG_EXPERIMENT or category == HYRISE_EXPERIMENT:
             result_file.write(str(txn_itr) + " , " + str(stat) + "\n")
         elif category == DISTRIBUTION_EXPERIMENT:
             result_file.write(str(query_itr) + " , " + str(tile_group_count) + "\n")
@@ -1666,7 +1762,7 @@ def join_eval():
 
     # COLLECT STATS
     collect_stats(JOIN_DIR, "join.csv", JOIN_EXPERIMENT)
-    
+
 # CACHING -- EVAL
 def caching_eval():
 
@@ -1675,8 +1771,8 @@ def caching_eval():
 
     # cleanup
     subprocess.call(["rm -f " + OUTPUT_FILE], shell=True)
-    
-   
+
+
     DIRECT_TEST = "1"
     layout_mode = "2"
     operator_type = "1"
@@ -1692,15 +1788,15 @@ def caching_eval():
 
     DEFAULT_TUPLES_PER_TILEGROUP = 1000
     total_tuple_count = SCALE_FACTOR * DEFAULT_TUPLES_PER_TILEGROUP
-    
+
     content = ""
     for column_count in COLUMN_COUNTS:
         for write_ratio in WRITE_RATIOS:
             for selectivity in SELECTIVITY:
                 for tuples_per_tilegroup in TUPLES_PER_TILEGROUP:
-                                      
+
                     scale_factor = total_tuple_count / tuples_per_tilegroup
-                                         
+
                     # RUN EXPERIMENT
                     p = subprocess.Popen([PERF, "stat",
                                      "-e", "task-clock,cycles,instructions,cache-references,cache-misses",
@@ -1711,10 +1807,10 @@ def caching_eval():
                                      "-c", str(column_count),
                                      "-w", str(write_ratio),
                                      "-s", str(selectivity),
-                                     "-g", str(tuples_per_tilegroup)], 
+                                     "-g", str(tuples_per_tilegroup)],
                                      stdout=subprocess.PIPE,
                                      stderr=subprocess.PIPE)
-                                     
+
                     out, err = p.communicate()
 
                     split_list = err.split('\n');
@@ -1724,8 +1820,8 @@ def caching_eval():
                     cache_misses_count = cache_misses_list[0]
                     cache_misses_count = cache_misses_count.replace(',', '')
 
-                    # build line      
-                    line = layout_mode + " " + operator_type + " " + str(selectivity) + " " + projectivity + " " + str(column_count) + " " + str(write_ratio) + " " + subset_experiment_type + " " + access_num_groups + " " + subset_ratio + " " + str(tuples_per_tilegroup) + " " + query_itr + " " + theta + " " + split_point + " " + sample_weight + " " + str(SCALE_FACTOR) + " " + cache_misses_count 
+                    # build line
+                    line = layout_mode + " " + operator_type + " " + str(selectivity) + " " + projectivity + " " + str(column_count) + " " + str(write_ratio) + " " + subset_experiment_type + " " + access_num_groups + " " + subset_ratio + " " + str(tuples_per_tilegroup) + " " + query_itr + " " + theta + " " + split_point + " " + sample_weight + " " + str(SCALE_FACTOR) + " " + cache_misses_count
                     print(line)
 
                     content = content + line + "\n"
@@ -1738,6 +1834,18 @@ def caching_eval():
     # COLLECT STATS
     collect_stats(CACHING_DIR, "caching.csv", CACHING_EXPERIMENT)
 
+# HYRISE -- EVAL
+def hyrise_eval():
+
+    # CLEAN UP RESULT DIR
+    clean_up_dir(HYRISE_DIR)
+
+    # RUN EXPERIMENT
+    run_experiment(HYADAPT, SCALE_FACTOR,
+                   TRANSACTION_COUNT, HYRISE_EXPERIMENT)
+
+    # COLLECT STATS
+    collect_stats(HYRISE_DIR, "hyrise.csv", HYRISE_EXPERIMENT)
 
 ###################################################################################
 # MAIN
@@ -1749,7 +1857,6 @@ if __name__ == '__main__':
     parser.add_argument("-p", "--projectivity", help='eval projectivity', action='store_true')
     parser.add_argument("-s", "--selectivity", help='eval selectivity', action='store_true')
     parser.add_argument("-o", "--operator", help='eval operator', action='store_true')
-    parser.add_argument("-y", "--ycsb", help='eval ycsb', action='store_true')
     parser.add_argument("-v", "--vertical", help='eval vertical', action='store_true')
     parser.add_argument("-u", "--subset", help='eval subset', action='store_true')
     parser.add_argument("-z", "--adapt", help='eval adapt', action='store_true')
@@ -1758,19 +1865,20 @@ if __name__ == '__main__':
     parser.add_argument("-t", "--distribution", help='eval distribution', action='store_true')
     parser.add_argument("-x", "--join", help='eval join', action='store_true')
     parser.add_argument("-q", "--caching", help='eval caching', action='store_true')
+    parser.add_argument("-y", "--hyrise", help='eval hyrise', action='store_true')
 
     parser.add_argument("-a", "--projectivity_plot", help='plot projectivity', action='store_true')
     parser.add_argument("-b", "--selectivity_plot", help='plot selectivity', action='store_true')
     parser.add_argument("-c", "--operator_plot", help='plot operator', action='store_true')
-    parser.add_argument("-d", "--ycsb_plot", help='plot ycsb', action='store_true')
-    parser.add_argument("-e", "--vertical_plot", help='plot vertical', action='store_true')
-    parser.add_argument("-f", "--subset_plot", help='plot subset', action='store_true')
-    parser.add_argument("-g", "--adapt_plot", help='plot adapt', action='store_true')
-    parser.add_argument("-i", "--weight_plot", help='plot weight', action='store_true')
-    parser.add_argument("-j", "--reorg_plot", help='plot reorg', action='store_true')
-    parser.add_argument("-k", "--distribution_plot", help='plot distribution', action='store_true')
-    parser.add_argument("-l", "--join_plot", help='plot join', action='store_true')
-    parser.add_argument("-m", "--caching_plot", help='plot caching', action='store_true')
+    parser.add_argument("-d", "--vertical_plot", help='plot vertical', action='store_true')
+    parser.add_argument("-e", "--subset_plot", help='plot subset', action='store_true')
+    parser.add_argument("-f", "--adapt_plot", help='plot adapt', action='store_true')
+    parser.add_argument("-g", "--weight_plot", help='plot weight', action='store_true')
+    parser.add_argument("-i", "--reorg_plot", help='plot reorg', action='store_true')
+    parser.add_argument("-j", "--distribution_plot", help='plot distribution', action='store_true')
+    parser.add_argument("-k", "--join_plot", help='plot join', action='store_true')
+    parser.add_argument("-l", "--caching_plot", help='plot caching', action='store_true')
+    parser.add_argument("-m", "--hyrise_plot", help='plot hyrise', action='store_true')
 
     args = parser.parse_args()
 
@@ -1793,12 +1901,6 @@ if __name__ == '__main__':
 
     if args.operator_plot:
         operator_plot();
-
-    if args.ycsb:
-        ycsb_eval()
-
-    if args.ycsb_plot:
-        ycsb_plot()
 
     if args.vertical:
         vertical_eval()
@@ -1847,6 +1949,12 @@ if __name__ == '__main__':
 
     if args.caching_plot:
         caching_plot()
+
+    if args.hyrise:
+        hyrise_eval()
+
+    if args.hyrise_plot:
+        hyrise_plot()
 
     #create_legend()
     #create_bar_legend()
