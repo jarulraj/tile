@@ -56,3 +56,4 @@ zfile
 misc/linux-examples/*
 #results/
 outputfile*
+.project
