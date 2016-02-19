@@ -152,7 +152,7 @@ HYRISE_DIR = BASE_DIR + "/results/hyrise/"
 LAYOUTS = ("row", "column", "hybrid")
 OPERATORS = ("direct", "aggregate")
 REORG_LAYOUTS = ("row", "hybrid")
-HYRISE_LAYOUTS = ["row", "hybrid"]
+HYRISE_LAYOUTS = LAYOUTS
 
 SCALE_FACTOR = 1000.0
 
