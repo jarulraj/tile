@@ -152,7 +152,7 @@ HYRISE_DIR = BASE_DIR + "/results/hyrise/"
 LAYOUTS = ("row", "column", "hybrid")
 OPERATORS = ("direct", "aggregate")
 REORG_LAYOUTS = ("row", "hybrid")
-HYRISE_LAYOUTS = LAYOUTS
+HYRISE_LAYOUTS = ("row", "hybrid")
 
 SCALE_FACTOR = 1000.0
 
@@ -1445,7 +1445,7 @@ def caching_plot():
 # HYRISE -- PLOT
 def hyrise_plot():
 
-    HYRISE_COLUMN_COUNT = COLUMN_COUNTS[1]
+    HYRISE_COLUMN_COUNT = COLUMN_COUNTS[0]
     datasets = []
 
     for layout in HYRISE_LAYOUTS:
