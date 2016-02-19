@@ -889,7 +889,7 @@ def create_hyrise_line_chart(datasets):
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
     ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
-    #ax1.set_yscale('log', basey=10)
+    ax1.set_yscale('log', basey=2)
 
     # X-AXIS
     ax1.set_xlabel("Query Sequence", fontproperties=LABEL_FP)
