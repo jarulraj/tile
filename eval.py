@@ -1524,7 +1524,7 @@ def hyrise_plot():
 def concurrency_plot():
 
     for scan_ratio in SCAN_RATIOS:
-        
+
         datasets = []
 
         for layout in LAYOUTS:
@@ -1535,7 +1535,7 @@ def concurrency_plot():
             datasets.append(dataset)
 
         fig = create_concurrency_line_chart(datasets)
-        
+
         if scan_ratio == 0:
             rw_prefix = "write-only"
         elif scan_ratio == 0.5:
@@ -1650,9 +1650,9 @@ def collect_stats(result_dir,
         elif category == DISTRIBUTION_EXPERIMENT:
             result_directory = result_dir + "/" + "/" + tile_group_type
         elif category == JOIN_EXPERIMENT:
-            result_directory = result_dir + "/" + layout + "/" + operator + "/" + column_count            
+            result_directory = result_dir + "/" + layout + "/" + operator + "/" + column_count
         elif category == CONCURRENCY_EXPERIMENT:
-            result_directory = result_dir + "/" + layout + "/" + str(theta)          
+            result_directory = result_dir + "/" + layout + "/" + str(theta)
 
         if not os.path.exists(result_directory):
             os.makedirs(result_directory)
