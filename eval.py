@@ -175,7 +175,7 @@ WRITE_RATIOS = (0, 0.1)
 TUPLES_PER_TILEGROUP = (100, 1000, 10000, 100000)
 NUM_GROUPS = 5
 
-SCAN_RATIOS = (0, 0.1, 0.5, 1)
+SCAN_RATIOS = (0, 0.5, 0.9, 1)
 THREAD_COUNTS = (1, 2, 4, 8, 16)
 
 THETAS = (0, 0.5)
@@ -1171,7 +1171,7 @@ def create_concurrency_line_chart(datasets):
 
     # X-AXIS
     XAXIS_MIN = pow(2, -0.25)
-    XAXIS_MAX = pow(2, 2.25)
+    XAXIS_MAX = pow(2, 4.25)
     ax1.set_xlim([XAXIS_MIN, XAXIS_MAX])
     ax1.set_xlabel("Number of Threads", fontproperties=LABEL_FP)
     ax1.set_xscale('log', basex=2)
@@ -1536,15 +1536,15 @@ def concurrency_plot():
         fig = create_concurrency_line_chart(datasets)
         
         if scan_ratio == 0:
-            rw_prefix = "read-only"
-        elif scan_ratio == 0.1:
-            rw_prefix = "read-heavy"
+            rw_prefix = "write-only"
         elif scan_ratio == 0.5:
             rw_prefix = "balanced"
+        elif scan_ratio == 0.9:
+            rw_prefix = "read-heavy"
         elif scan_ratio == 1:
-            rw_prefix = "write-only"
+            rw_prefix = "read-only"
 
-        fileName = "concurrency-" + str(scan_ratio) + ".pdf"
+        fileName = "concurrency-" + rw_prefix + ".pdf"
 
         saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
 
