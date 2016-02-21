@@ -148,6 +148,7 @@ DISTRIBUTION_DIR = BASE_DIR + "/results/distribution/"
 JOIN_DIR = BASE_DIR + "/results/join/"
 CACHING_DIR = BASE_DIR + "/results/caching/"
 HYRISE_DIR = BASE_DIR + "/results/hyrise/"
+CONCURRENCY_DIR = BASE_DIR + "/results/concurrency/"
 
 LAYOUTS = ("row", "column", "hybrid")
 OPERATORS = ("direct", "aggregate")
@@ -155,6 +156,7 @@ REORG_LAYOUTS = ("row", "hybrid")
 HYRISE_LAYOUTS = ("row", "hybrid")
 
 SCALE_FACTOR = 1000.0
+SMALLER_SCALE_FACTOR = 100.0
 
 SELECTIVITY = (0.2, 0.4, 0.6, 0.8, 1.0)
 PROJECTIVITY = (0.01, 0.1, 0.5, 1.0)
@@ -173,10 +175,14 @@ WRITE_RATIOS = (0, 0.1)
 TUPLES_PER_TILEGROUP = (100, 1000, 10000, 100000)
 NUM_GROUPS = 5
 
+SCAN_RATIOS = (0, 0.5, 1)
+THREAD_COUNTS = (1, 2, 4)
+
 THETAS = (0, 0.5)
 DIST_TILE_GROUP_TYPES = 3
 
 TRANSACTION_COUNT = 3
+CONCURRENCY_TRANSACTION_COUNT = 1
 
 NUM_ADAPT_TESTS = 12
 REPEAT_ADAPT_TEST = 25
@@ -206,6 +212,7 @@ DISTRIBUTION_EXPERIMENT = 9
 JOIN_EXPERIMENT = 10
 CACHING_EXPERIMENT = 11
 HYRISE_EXPERIMENT = 13
+CONCURRENCY_EXPERIMENT = 14
 
 YCSB_EXPERIMENT = 1
 
@@ -1125,6 +1132,58 @@ def create_distribution_stack_chart(datasets):
 
     return (fig)
 
+def create_concurrency_line_chart(datasets):
+    fig = plot.figure()
+    ax1 = fig.add_subplot(111)
+
+    # X-AXIS
+    x_values = THREAD_COUNTS
+    N = len(x_values)
+    x_labels = THREAD_COUNTS
+    num_items = len(THREAD_COUNTS);
+    ind = np.arange(N)
+    idx = 0
+
+    # GROUP
+    for group_index, group in enumerate(LAYOUTS):
+        group_data = []
+
+        # LINE
+        for line_index, line in enumerate(x_values):
+            group_data.append(datasets[group_index][line_index][1])
+
+        LOG.info("%s group_data = %s ", group, str(group_data))
+
+        ax1.plot(x_values, group_data, color=OPT_LINE_COLORS[idx], linewidth=OPT_LINE_WIDTH,
+                 marker=OPT_MARKERS[idx], markersize=OPT_MARKER_SIZE, label=str(group))
+
+        idx = idx + 1
+
+    # GRID
+    axes = ax1.get_axes()
+    makeGrid(ax1)
+
+    # Y-AXIS
+    ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
+    ax1.minorticks_off()
+    ax1.set_ylabel("Throughput", fontproperties=LABEL_FP)
+    #ax1.set_yscale('log', basey=2)
+
+    # X-AXIS
+    XAXIS_MIN = pow(2, -0.25)
+    XAXIS_MAX = pow(2, 2.25)
+    ax1.set_xlim([XAXIS_MIN, XAXIS_MAX])
+    ax1.set_xlabel("Number of Threads", fontproperties=LABEL_FP)
+    ax1.set_xscale('log', basex=2)
+    ax1.set_xticks(THREAD_COUNTS)
+
+    for label in ax1.get_yticklabels() :
+        label.set_fontproperties(TICK_FP)
+    for label in ax1.get_xticklabels() :
+        label.set_fontproperties(TICK_FP)
+
+    return (fig)
+
 ###################################################################################
 # PLOT HELPERS
 ###################################################################################
@@ -1460,6 +1519,27 @@ def hyrise_plot():
 
     saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH * 3, height=OPT_GRAPH_HEIGHT/1.5)
 
+# CONCURRENCY -- PLOT
+def concurrency_plot():
+
+    for scan_ratio in SCAN_RATIOS:
+        
+        datasets = []
+
+        for layout in LAYOUTS:
+
+            data_file = CONCURRENCY_DIR + "/" + layout + "/" + str(scan_ratio) + "/" + "concurrency.csv"
+
+            dataset = loadDataFile(10, 3, data_file)
+            datasets.append(dataset)
+
+        fig = create_concurrency_line_chart(datasets)
+
+        fileName = "concurrency-" + str(scan_ratio) + ".pdf"
+
+        saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
+
+
 ###################################################################################
 # EVAL HELPERS
 ###################################################################################
@@ -1560,7 +1640,9 @@ def collect_stats(result_dir,
         elif category == DISTRIBUTION_EXPERIMENT:
             result_directory = result_dir + "/" + "/" + tile_group_type
         elif category == JOIN_EXPERIMENT:
-            result_directory = result_dir + "/" + layout + "/" + operator + "/" + column_count
+            result_directory = result_dir + "/" + layout + "/" + operator + "/" + column_count            
+        elif category == CONCURRENCY_EXPERIMENT:
+            result_directory = result_dir + "/" + layout + "/" + str(theta)          
 
         if not os.path.exists(result_directory):
             os.makedirs(result_directory)
@@ -1579,6 +1661,8 @@ def collect_stats(result_dir,
             result_file.write(str(query_itr) + " , " + str(tile_group_count) + "\n")
         elif category == WEIGHT_EXPERIMENT:
             result_file.write(str(txn_itr) + " , " + str(split_point) + "\n")
+        elif category == CONCURRENCY_EXPERIMENT:
+            result_file.write(str(sample_weight) + " , " + str(stat) + "\n")
 
         result_file.close()
 
@@ -1847,6 +1931,19 @@ def hyrise_eval():
     # COLLECT STATS
     collect_stats(HYRISE_DIR, "hyrise.csv", HYRISE_EXPERIMENT)
 
+# CONCURRENCY -- EVAL
+def concurrency_eval():
+
+    # CLEAN UP RESULT DIR
+    clean_up_dir(CONCURRENCY_DIR)
+
+    # RUN EXPERIMENT
+    run_experiment(HYADAPT, SMALLER_SCALE_FACTOR,
+                   CONCURRENCY_TRANSACTION_COUNT, CONCURRENCY_EXPERIMENT)
+
+    # COLLECT STATS
+    collect_stats(CONCURRENCY_DIR, "concurrency.csv", CONCURRENCY_EXPERIMENT)
+
 ###################################################################################
 # MAIN
 ###################################################################################
@@ -1858,7 +1955,7 @@ if __name__ == '__main__':
     parser.add_argument("-s", "--selectivity", help='eval selectivity', action='store_true')
     parser.add_argument("-o", "--operator", help='eval operator', action='store_true')
     parser.add_argument("-v", "--vertical", help='eval vertical', action='store_true')
-    parser.add_argument("-u", "--subset", help='eval subset', action='store_true')
+    #parser.add_argument("-u", "--subset", help='eval subset', action='store_true')
     parser.add_argument("-z", "--adapt", help='eval adapt', action='store_true')
     parser.add_argument("-w", "--weight", help='eval weight', action='store_true')
     parser.add_argument("-r", "--reorg", help='eval reorg', action='store_true')
@@ -1866,12 +1963,13 @@ if __name__ == '__main__':
     parser.add_argument("-x", "--join", help='eval join', action='store_true')
     parser.add_argument("-q", "--caching", help='eval caching', action='store_true')
     parser.add_argument("-y", "--hyrise", help='eval hyrise', action='store_true')
+    parser.add_argument("-u", "--concurrency", help='eval concurrency', action='store_true')
 
     parser.add_argument("-a", "--projectivity_plot", help='plot projectivity', action='store_true')
     parser.add_argument("-b", "--selectivity_plot", help='plot selectivity', action='store_true')
     parser.add_argument("-c", "--operator_plot", help='plot operator', action='store_true')
     parser.add_argument("-d", "--vertical_plot", help='plot vertical', action='store_true')
-    parser.add_argument("-e", "--subset_plot", help='plot subset', action='store_true')
+    #parser.add_argument("-e", "--subset_plot", help='plot subset', action='store_true')
     parser.add_argument("-f", "--adapt_plot", help='plot adapt', action='store_true')
     parser.add_argument("-g", "--weight_plot", help='plot weight', action='store_true')
     parser.add_argument("-i", "--reorg_plot", help='plot reorg', action='store_true')
@@ -1879,6 +1977,7 @@ if __name__ == '__main__':
     parser.add_argument("-k", "--join_plot", help='plot join', action='store_true')
     parser.add_argument("-l", "--caching_plot", help='plot caching', action='store_true')
     parser.add_argument("-m", "--hyrise_plot", help='plot hyrise', action='store_true')
+    parser.add_argument("-n", "--concurrency_plot", help='plot concurrency', action='store_true')
 
     args = parser.parse_args()
 
@@ -1908,11 +2007,11 @@ if __name__ == '__main__':
     if args.vertical_plot:
         vertical_plot()
 
-    if args.subset:
-        subset_eval()
+    #if args.subset:
+    #    subset_eval()
 
-    if args.subset_plot:
-        subset_plot()
+    #if args.subset_plot:
+    #    subset_plot()
 
     if args.adapt:
         adapt_eval()
@@ -1955,6 +2054,12 @@ if __name__ == '__main__':
 
     if args.hyrise_plot:
         hyrise_plot()
+
+    if args.concurrency:
+        concurrency_eval()
+
+    if args.concurrency_plot:
+        concurrency_plot()
 
     #create_legend()
     #create_bar_legend()
