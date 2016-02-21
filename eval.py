@@ -175,8 +175,8 @@ WRITE_RATIOS = (0, 0.1)
 TUPLES_PER_TILEGROUP = (100, 1000, 10000, 100000)
 NUM_GROUPS = 5
 
-SCAN_RATIOS = (0, 0.5, 1)
-THREAD_COUNTS = (1, 2, 4)
+SCAN_RATIOS = (0, 0.1, 0.5, 1)
+THREAD_COUNTS = (1, 2, 4, 8, 16)
 
 THETAS = (0, 0.5)
 DIST_TILE_GROUP_TYPES = 3
@@ -1534,6 +1534,15 @@ def concurrency_plot():
             datasets.append(dataset)
 
         fig = create_concurrency_line_chart(datasets)
+        
+        if scan_ratio == 0:
+            rw_prefix = "read-only"
+        elif scan_ratio == 0.1:
+            rw_prefix = "read-heavy"
+        elif scan_ratio == 0.5:
+            rw_prefix = "balanced"
+        elif scan_ratio == 1:
+            rw_prefix = "write-only"
 
         fileName = "concurrency-" + str(scan_ratio) + ".pdf"
 
