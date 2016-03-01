@@ -170,10 +170,8 @@ OP_PROJECTIVITY = (0.01, 0.1, 1.0)
 OP_COLUMN_COUNT = 100
 OP_SELECTIVITY = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
 
-COLUMN_COUNTS = (25, 100)
+COLUMN_COUNTS = (100, 500)
 WRITE_RATIOS = (0, 1)
-#COLUMN_COUNTS = (50, 200)
-#WRITE_RATIOS = (0, 0.1)
 TUPLES_PER_TILEGROUP = (100, 1000, 10000, 100000)
 NUM_GROUPS = 5
 
@@ -204,9 +202,9 @@ WEIGHT_QUERY_COUNT = NUM_WEIGHT_TEST * REPEAT_WEIGHT_TEST
 REORG_QUERY_COUNT = 25 * 4
 DIST_QUERY_COUNT = 13
 
-WORKLOAD_SCALE_FACTOR = 100
-RANDOM_RANGE = 2
-SMALLER_RANDOM_RANGE = 0.5
+WORKLOAD_SCALE_FACTOR = 1
+RANDOM_RANGE = 0
+SMALLER_RANDOM_RANGE = 0
 
 PROJECTIVITY_EXPERIMENT = 1
 SELECTIVITY_EXPERIMENT = 2
@@ -451,7 +449,7 @@ def create_projectivity_bar_chart(datasets):
     ax1.minorticks_off()
     ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
     #ax1.set_ylim([YAXIS_MIN, YAXIS_MAX])
-    ax1.set_yscale('log', nonposy='clip', basey=2)
+    #ax1.set_yscale('log', nonposy='clip', basey=2)
 
     # X-AXIS
     ax1.set_xlabel("Fraction of Attributes Projected", fontproperties=LABEL_FP)
@@ -506,7 +504,7 @@ def create_selectivity_line_chart(datasets):
     ax1.minorticks_off()
     ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
     #ax1.set_ylim([YAXIS_MIN, YAXIS_MAX])
-    ax1.set_yscale('log', basey=2)
+    #ax1.set_yscale('log', basey=2)
 
     # X-AXIS
     XAXIS_MIN = 0.1
