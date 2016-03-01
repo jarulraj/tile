@@ -170,8 +170,10 @@ OP_PROJECTIVITY = (0.01, 0.1, 1.0)
 OP_COLUMN_COUNT = 100
 OP_SELECTIVITY = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
 
-COLUMN_COUNTS = (50, 200)
-WRITE_RATIOS = (0, 0.1)
+COLUMN_COUNTS = (25, 100)
+WRITE_RATIOS = (0, 1)
+#COLUMN_COUNTS = (50, 200)
+#WRITE_RATIOS = (0, 0.1)
 TUPLES_PER_TILEGROUP = (100, 1000, 10000, 100000)
 NUM_GROUPS = 5
 
@@ -498,9 +500,12 @@ def create_selectivity_line_chart(datasets):
     makeGrid(ax1)
 
     # Y-AXIS
+    #YAXIS_MIN = pow(2.0, 13)
+    #YAXIS_MAX = pow(2.0, 19)    
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
     ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
+    #ax1.set_ylim([YAXIS_MIN, YAXIS_MAX])
     ax1.set_yscale('log', basey=2)
 
     # X-AXIS
