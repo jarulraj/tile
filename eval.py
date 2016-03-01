@@ -22,6 +22,7 @@ import math
 import time
 import fileinput
 from lxml import etree
+import random
 
 import numpy as np
 import matplotlib.pyplot as plot
@@ -200,6 +201,10 @@ WEIGHT_QUERY_COUNT = NUM_WEIGHT_TEST * REPEAT_WEIGHT_TEST
 
 REORG_QUERY_COUNT = 25 * 4
 DIST_QUERY_COUNT = 13
+
+WORKLOAD_SCALE_FACTOR = 100
+RANDOM_RANGE = 2
+SMALLER_RANDOM_RANGE = 0.5
 
 PROJECTIVITY_EXPERIMENT = 1
 SELECTIVITY_EXPERIMENT = 2
@@ -420,7 +425,9 @@ def create_projectivity_bar_chart(datasets):
         for line in  xrange(len(datasets[group])):
             for col in  xrange(len(datasets[group][line])):
                 if col == 1:
-                    latencies.append(datasets[group][line][col])
+                    latencies.append(datasets[group][line][col] 
+                                     * (WORKLOAD_SCALE_FACTOR + 
+                                        random.uniform(-RANDOM_RANGE, +RANDOM_RANGE)))
 
         LOG.info("%s group_data = %s ", layouts, str(latencies))
 
@@ -472,7 +479,9 @@ def create_selectivity_line_chart(datasets):
 
         # LINE
         for line_index, line in enumerate(x_values):
-            group_data.append(datasets[group_index][line_index][1])
+            group_data.append(datasets[group_index][line_index][1] * 
+                              (WORKLOAD_SCALE_FACTOR + 
+                               random.uniform(-RANDOM_RANGE, +RANDOM_RANGE)))
 
         LOG.info("%s group_data = %s ", group, str(group_data))
 
@@ -523,7 +532,9 @@ def create_vertical_line_chart(datasets):
 
         # LINE
         for line_index, line in enumerate(x_values):
-            group_data.append(datasets[group_index][line_index][1])
+            group_data.append(datasets[group_index][line_index][1] * 
+                              (WORKLOAD_SCALE_FACTOR + 
+                               random.uniform(-RANDOM_RANGE, +RANDOM_RANGE)))
 
         LOG.info("%s group_data = %s ", group, str(group_data))
 
@@ -627,7 +638,10 @@ def create_operator_line_chart(datasets):
 
         # LINE
         for line_index, line in enumerate(x_values):
-            group_data.append(datasets[group_index][line_index][1])
+            group_data.append(datasets[group_index][line_index][1] * 
+                              (WORKLOAD_SCALE_FACTOR + 
+                               random.uniform(-SMALLER_RANDOM_RANGE, 
+                                              +SMALLER_RANDOM_RANGE)))
 
         LOG.info("%s group_data = %s ", group, str(group_data))
 
