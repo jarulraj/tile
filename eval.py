@@ -410,7 +410,7 @@ def create_projectivity_bar_chart(datasets):
     x_labels = PROJECTIVITY
 
     layouts = ["NSM", "DSM", "FSM"]
-
+    
     ind = np.arange(N)
     margin = 0.15
     width = ((1.0 - 2 * margin) / N)
@@ -443,10 +443,13 @@ def create_projectivity_bar_chart(datasets):
     makeGrid(ax1)
 
     # Y-AXIS
+    #YAXIS_MIN = pow(2.0, 12)
+    #YAXIS_MAX = pow(2.0, 22)    
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
     ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
     #ax1.set_ylim([YAXIS_MIN, YAXIS_MAX])
+    ax1.set_yscale('log', nonposy='clip', basey=2)
 
     # X-AXIS
     ax1.set_xlabel("Fraction of Attributes Projected", fontproperties=LABEL_FP)
@@ -498,7 +501,7 @@ def create_selectivity_line_chart(datasets):
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
     ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
-    #ax1.set_yscale('log', basey=2)
+    ax1.set_yscale('log', basey=2)
 
     # X-AXIS
     XAXIS_MIN = 0.1
@@ -1053,7 +1056,7 @@ def create_reorg_line_chart(datasets):
     ax1.minorticks_off()
     ax1.set_ylabel("Execution time (ms)", fontproperties=SMALL_LABEL_FP)
     #ax1.set_ylim((YMIN, YMAX))
-    #ax1.set_yscale('log', basey=10)
+    ax1.set_yscale('log', basey=2)
 
     # X-AXIS
     REORG_INTERVAL = 25
