@@ -159,7 +159,7 @@ HYRISE_LAYOUTS = ("row", "hybrid")
 SCALE_FACTOR = 1000.0
 
 SELECTIVITY = (0.2, 0.4, 0.6, 0.8, 1.0)
-PROJECTIVITY = (0.01, 0.1, 0.5, 1.0)
+PROJECTIVITY = (0.01, 0.1, 0.5)
 SUBSET_RATIOS = (0.2, 0.4, 0.6, 0.8, 1)
 ACCESS_NUM_GROUPS = (1, 2, 4, 8, 16)
 
@@ -170,7 +170,7 @@ OP_PROJECTIVITY = (0.01, 0.1, 1.0)
 OP_COLUMN_COUNT = 100
 OP_SELECTIVITY = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
 
-COLUMN_COUNTS = (100, 500)
+COLUMN_COUNTS = (25, 500)
 WRITE_RATIOS = (0, 1)
 TUPLES_PER_TILEGROUP = (100, 1000, 10000, 100000)
 NUM_GROUPS = 5
@@ -441,10 +441,10 @@ def create_projectivity_bar_chart(datasets):
     axes = ax1.get_axes()
     #axes.set_ylim(0.01, 1000000)
     makeGrid(ax1)
-
+    
     # Y-AXIS
-    #YAXIS_MIN = pow(2.0, 12)
-    #YAXIS_MAX = pow(2.0, 22)    
+    #YAXIS_MIN = pow(10.0, 2)
+    #YAXIS_MAX = pow(10.0, 5)    
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
     ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
@@ -1053,13 +1053,13 @@ def create_reorg_line_chart(datasets):
     makeGrid(ax1)
 
     # Y-AXIS
-    YMIN = 100
-    YMAX = 1000000
+    YMIN = pow(10, 2)
+    YMAX = pow(10, 5)
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
     ax1.set_ylabel("Execution time (ms)", fontproperties=SMALL_LABEL_FP)
-    #ax1.set_ylim((YMIN, YMAX))
-    ax1.set_yscale('log', basey=2)
+    ax1.set_ylim((YMIN, YMAX))
+    ax1.set_yscale('log', basey=10)
 
     # X-AXIS
     REORG_INTERVAL = 25
@@ -1226,6 +1226,7 @@ def projectivity_plot():
                     data_file = PROJECTIVITY_DIR + "/" + layout + "/" + operator + "/" + str(column_count) + "/" + str(write_ratio) + "/" + "projectivity.csv"
 
                     dataset = loadDataFile(4, 2, data_file)
+                    dataset = dataset[:-1]
                     datasets.append(dataset)
 
                 fig = create_projectivity_bar_chart(datasets)
