@@ -1,0 +1,60 @@
+ubuntu@~/git/peloton/build ∴ ./src/hyadapt -o 1 -g 1 -k 10000 -l 0 -t 3
+operator_type        : DIRECT
+layout               : ROW
+selectivity          : 1
+projectivity         : 1
+scale_factor         : 10000
+attribute_count      : 100
+write_ratio          : 0
+tuples_per_tgroup    : 1
+transactions         : 3
+----------------------------------------------------------
+0 1 1 1 0 10000 100 0 1 1 0 0 0 1 :: 640.37 ms
+ubuntu@~/git/peloton/build ∴ ./src/hyadapt -o 1 -g 10 -k 1000 -l 0 -t 3
+operator_type        : DIRECT
+layout               : ROW
+selectivity          : 1
+projectivity         : 1
+scale_factor         : 1000
+attribute_count      : 100
+write_ratio          : 0
+tuples_per_tgroup    : 10
+transactions         : 3
+----------------------------------------------------------
+0 1 1 1 0 1000 100 0 1 1 0 0 0 10 :: 82.3378 ms
+ubuntu@~/git/peloton/build ∴ ./src/hyadapt -o 1 -g 100 -k 100 -l 0 -t 3
+operator_type        : DIRECT
+layout               : ROW
+selectivity          : 1
+projectivity         : 1
+scale_factor         : 100
+attribute_count      : 100
+write_ratio          : 0
+tuples_per_tgroup    : 100
+transactions         : 3
+----------------------------------------------------------
+0 1 1 1 0 100 100 0 1 1 0 0 0 100 :: 25.6506 ms
+ubuntu@~/git/peloton/build ∴ ./src/hyadapt -o 1 -g 1000 -k 10 -l 0 -t 3
+operator_type        : DIRECT
+layout               : ROW
+selectivity          : 1
+projectivity         : 1
+scale_factor         : 10
+attribute_count      : 100
+write_ratio          : 0
+tuples_per_tgroup    : 1000
+transactions         : 3
+----------------------------------------------------------
+0 1 1 1 0 10 100 0 1 1 0 0 0 1000 :: 18.3399 ms
+ubuntu@~/git/peloton/build ∴ ./src/hyadapt -o 1 -g 10000 -k 1 -l 0 -t 3
+operator_type        : DIRECT
+layout               : ROW
+selectivity          : 1
+projectivity         : 1
+scale_factor         : 1
+attribute_count      : 100
+write_ratio          : 0
+tuples_per_tgroup    : 10000
+transactions         : 3
+----------------------------------------------------------
+0 1 1 1 0 1 100 0 1 1 0 0 0 10000 :: 17.675 ms

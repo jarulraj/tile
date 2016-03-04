@@ -203,8 +203,6 @@ REORG_QUERY_COUNT = 25 * 4
 DIST_QUERY_COUNT = 13
 
 WORKLOAD_SCALE_FACTOR = 1
-RANDOM_RANGE = 0
-SMALLER_RANDOM_RANGE = 0
 
 PROJECTIVITY_EXPERIMENT = 1
 SELECTIVITY_EXPERIMENT = 2
@@ -426,8 +424,7 @@ def create_projectivity_bar_chart(datasets):
             for col in  xrange(len(datasets[group][line])):
                 if col == 1:
                     latencies.append(datasets[group][line][col] 
-                                     * (WORKLOAD_SCALE_FACTOR + 
-                                        random.uniform(-RANDOM_RANGE, +RANDOM_RANGE)))
+                                     * (WORKLOAD_SCALE_FACTOR))
 
         LOG.info("%s group_data = %s ", layouts, str(latencies))
 
@@ -483,8 +480,7 @@ def create_selectivity_line_chart(datasets):
         # LINE
         for line_index, line in enumerate(x_values):
             group_data.append(datasets[group_index][line_index][1] * 
-                              (WORKLOAD_SCALE_FACTOR + 
-                               random.uniform(-RANDOM_RANGE, +RANDOM_RANGE)))
+                              (WORKLOAD_SCALE_FACTOR))
 
         LOG.info("%s group_data = %s ", group, str(group_data))
 
@@ -539,8 +535,7 @@ def create_vertical_line_chart(datasets):
         # LINE
         for line_index, line in enumerate(x_values):
             group_data.append(datasets[group_index][line_index][1] * 
-                              (WORKLOAD_SCALE_FACTOR + 
-                               random.uniform(-RANDOM_RANGE, +RANDOM_RANGE)))
+                              (WORKLOAD_SCALE_FACTOR))
 
         LOG.info("%s group_data = %s ", group, str(group_data))
 
@@ -591,7 +586,8 @@ def create_caching_line_chart(datasets):
 
         # LINE
         for line_index, line in enumerate(x_values):
-            group_data.append(datasets[group_index][line_index][1])
+            group_data.append(datasets[group_index][line_index][1]  
+                                     * (WORKLOAD_SCALE_FACTOR))
 
         LOG.info("%s group_data = %s ", group, str(group_data))
 
@@ -645,9 +641,7 @@ def create_operator_line_chart(datasets):
         # LINE
         for line_index, line in enumerate(x_values):
             group_data.append(datasets[group_index][line_index][1] * 
-                              (WORKLOAD_SCALE_FACTOR + 
-                               random.uniform(-SMALLER_RANDOM_RANGE, 
-                                              +SMALLER_RANDOM_RANGE)))
+                              (WORKLOAD_SCALE_FACTOR))
 
         LOG.info("%s group_data = %s ", group, str(group_data))
 
