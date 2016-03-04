@@ -975,7 +975,7 @@ def create_weight_line_chart(datasets):
 
     # Y-AXIS
     YMIN = 0
-    YMAX = 200
+    YMAX = COLUMN_COUNTS[1]
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
     ax1.set_ylabel("Split Point", fontproperties=SMALL_LABEL_FP)
