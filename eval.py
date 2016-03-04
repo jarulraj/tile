@@ -202,8 +202,6 @@ WEIGHT_QUERY_COUNT = NUM_WEIGHT_TEST * REPEAT_WEIGHT_TEST
 REORG_QUERY_COUNT = 25 * 4
 DIST_QUERY_COUNT = 13
 
-WORKLOAD_SCALE_FACTOR = 1
-
 PROJECTIVITY_EXPERIMENT = 1
 SELECTIVITY_EXPERIMENT = 2
 OPERATOR_EXPERIMENT = 3
@@ -423,8 +421,7 @@ def create_projectivity_bar_chart(datasets):
         for line in  xrange(len(datasets[group])):
             for col in  xrange(len(datasets[group][line])):
                 if col == 1:
-                    latencies.append(datasets[group][line][col] 
-                                     * (WORKLOAD_SCALE_FACTOR))
+                    latencies.append(datasets[group][line][col])
 
         LOG.info("%s group_data = %s ", layouts, str(latencies))
 
@@ -444,7 +441,7 @@ def create_projectivity_bar_chart(datasets):
     #YAXIS_MAX = pow(10.0, 5)    
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
-    ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
+    ax1.set_ylabel("Execution time (s)", fontproperties=LABEL_FP)
     #ax1.set_ylim([YAXIS_MIN, YAXIS_MAX])
     #ax1.set_yscale('log', nonposy='clip', basey=2)
 
@@ -479,8 +476,7 @@ def create_selectivity_line_chart(datasets):
 
         # LINE
         for line_index, line in enumerate(x_values):
-            group_data.append(datasets[group_index][line_index][1] * 
-                              (WORKLOAD_SCALE_FACTOR))
+            group_data.append(datasets[group_index][line_index][1])
 
         LOG.info("%s group_data = %s ", group, str(group_data))
 
@@ -498,7 +494,7 @@ def create_selectivity_line_chart(datasets):
     #YAXIS_MAX = pow(2.0, 19)    
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
-    ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
+    ax1.set_ylabel("Execution time (s)", fontproperties=LABEL_FP)
     #ax1.set_ylim([YAXIS_MIN, YAXIS_MAX])
     #ax1.set_yscale('log', basey=2)
 
@@ -534,8 +530,7 @@ def create_vertical_line_chart(datasets):
 
         # LINE
         for line_index, line in enumerate(x_values):
-            group_data.append(datasets[group_index][line_index][1] * 
-                              (WORKLOAD_SCALE_FACTOR))
+            group_data.append(datasets[group_index][line_index][1])
 
         LOG.info("%s group_data = %s ", group, str(group_data))
 
@@ -551,7 +546,7 @@ def create_vertical_line_chart(datasets):
     # Y-AXIS
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
-    ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
+    ax1.set_ylabel("Execution time (s)", fontproperties=LABEL_FP)
     #ax1.set_yscale('log', basey=10)
 
     # X-AXIS
@@ -586,8 +581,7 @@ def create_caching_line_chart(datasets):
 
         # LINE
         for line_index, line in enumerate(x_values):
-            group_data.append(datasets[group_index][line_index][1]  
-                                     * (WORKLOAD_SCALE_FACTOR))
+            group_data.append(datasets[group_index][line_index][1]/1000000)
 
         LOG.info("%s group_data = %s ", group, str(group_data))
 
@@ -603,7 +597,7 @@ def create_caching_line_chart(datasets):
     # Y-AXIS
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
-    ax1.set_ylabel("Cache Misses", fontproperties=LABEL_FP)
+    ax1.set_ylabel("Cache Misses (M)", fontproperties=LABEL_FP)
     #ax1.set_yscale('log', basey=10)
 
     # X-AXIS
@@ -640,8 +634,7 @@ def create_operator_line_chart(datasets):
 
         # LINE
         for line_index, line in enumerate(x_values):
-            group_data.append(datasets[group_index][line_index][1] * 
-                              (WORKLOAD_SCALE_FACTOR))
+            group_data.append(datasets[group_index][line_index][1])
 
         LOG.info("%s group_data = %s ", group, str(group_data))
 
@@ -669,7 +662,7 @@ def create_operator_line_chart(datasets):
     # Y-AXIS
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
-    ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
+    ax1.set_ylabel("Execution time (s)", fontproperties=LABEL_FP)
     #ax1.set_yscale('log', basey=2)
 
     for label in ax1.get_yticklabels() :
@@ -1459,9 +1452,10 @@ def distribution_plot():
 def join_plot():
 
     operator = "join"
+    JOIN_COLUMN_COUNTS = [50, 200]
 
     column_count_type = 0
-    for column_count in COLUMN_COUNTS:
+    for column_count in JOIN_COLUMN_COUNTS:
         column_count_type = column_count_type + 1
 
         print(operator)
@@ -1471,6 +1465,7 @@ def join_plot():
             data_file = JOIN_DIR + "/" + layout + "/" + operator + "/" + str(column_count) + "/" + "join.csv"
 
             dataset = loadDataFile(4, 2, data_file)
+            dataset = dataset[:-1]
             datasets.append(dataset)
 
         fig = create_projectivity_bar_chart(datasets)
