@@ -140,7 +140,7 @@ PROJECTIVITY_DIR = BASE_DIR + "/results/projectivity/"
 SELECTIVITY_DIR = BASE_DIR + "/results/selectivity/"
 OPERATOR_DIR = BASE_DIR + "/results/operator/"
 YCSB_DIR = BASE_DIR + "/results/ycsb/"
-VERTICAL_DIR = BASE_DIR + "/results/vertical/"
+HORIZONTAL_DIR = BASE_DIR + "/results/horizontal/"
 SUBSET_DIR = BASE_DIR + "/results/subset/"
 ADAPT_DIR = BASE_DIR + "/results/adapt/"
 WEIGHT_DIR = BASE_DIR + "/results/weight/"
@@ -205,7 +205,7 @@ DIST_QUERY_COUNT = 13
 PROJECTIVITY_EXPERIMENT = 1
 SELECTIVITY_EXPERIMENT = 2
 OPERATOR_EXPERIMENT = 3
-VERTICAL_EXPERIMENT= 4
+HORIZONTAL_EXPERIMENT= 4
 SUBSET_EXPERIMENT= 5
 ADAPT_EXPERIMENT = 6
 WEIGHT_EXPERIMENT = 7
@@ -325,7 +325,7 @@ def create_bar_legend():
 
     figlegend.savefig('legend_bar.pdf')
 
-def create_vertical_legend():
+def create_horizontal_legend():
     fig = pylab.figure()
     ax1 = fig.add_subplot(111)
 
@@ -364,7 +364,7 @@ def create_vertical_legend():
                      frameon=False, borderaxespad=0.0,
                      handleheight=1.5, handlelength=4)
 
-    figlegend.savefig('legend_vertical.pdf')
+    figlegend.savefig('legend_horizontal.pdf')
 
 def create_legend():
     fig = pylab.figure()
@@ -437,8 +437,8 @@ def create_projectivity_bar_chart(datasets):
     makeGrid(ax1)
     
     # Y-AXIS
-    #YAXIS_MIN = pow(10.0, 2)
-    #YAXIS_MAX = pow(10.0, 5)    
+    YAXIS_MIN = 0
+    YAXIS_MAX = 45000    
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
     ax1.set_ylabel("Execution time (s)", fontproperties=LABEL_FP)
@@ -511,7 +511,7 @@ def create_selectivity_line_chart(datasets):
 
     return (fig)
 
-def create_vertical_line_chart(datasets):
+def create_horizontal_line_chart(datasets):
     fig = plot.figure()
     ax1 = fig.add_subplot(111)
 
@@ -1268,8 +1268,8 @@ def selectivity_plot():
                 saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
 
 
-# VERTICAL -- PLOT
-def vertical_plot():
+# HORIZONTAL -- PLOT
+def horizontal_plot():
 
     column_count_type = 0
     for column_count in COLUMN_COUNTS:
@@ -1280,12 +1280,12 @@ def vertical_plot():
 
             for tuples_per_tg in TUPLES_PER_TILEGROUP:
 
-                data_file = VERTICAL_DIR + "/" + str(tuples_per_tg) + "/" + str(column_count) + "/" + str(write_ratio) + "/" + "vertical.csv"
+                data_file = HORIZONTAL_DIR + "/" + str(tuples_per_tg) + "/" + str(column_count) + "/" + str(write_ratio) + "/" + "horizontal.csv"
 
                 dataset = loadDataFile(10, 2, data_file)
                 datasets.append(dataset)
 
-            fig = create_vertical_line_chart(datasets)
+            fig = create_horizontal_line_chart(datasets)
 
             if write_ratio == 0:
                 write_mix = "rd"
@@ -1297,7 +1297,7 @@ def vertical_plot():
             else:
                 table_type = "wide"
 
-            fileName = "vertical-" + table_type + "-" + write_mix + ".pdf"
+            fileName = "horizontal-" + table_type + "-" + write_mix + ".pdf"
 
             saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH, height=OPT_GRAPH_HEIGHT/2.0)
 
@@ -1644,7 +1644,7 @@ def collect_stats(result_dir,
             result_directory = result_dir + "/" + layout + "/" + operator + "/" + column_count + "/" + write_ratio
         elif category == OPERATOR_EXPERIMENT:
             result_directory = result_dir + "/" + layout + "/" + str(projectivity) + "/" + column_count + "/" + write_ratio
-        elif category == VERTICAL_EXPERIMENT or category == CACHING_EXPERIMENT:
+        elif category == HORIZONTAL_EXPERIMENT or category == CACHING_EXPERIMENT:
             result_directory = result_dir + "/" + str(tuples_per_tg) + "/" + column_count + "/" + write_ratio
         elif category == SUBSET_EXPERIMENT:
             if subset_experiment_type == SUBSET_SINGLE_GROUP_EXPERIMENT:
@@ -1673,7 +1673,7 @@ def collect_stats(result_dir,
         # WRITE OUT STATS
         if category == PROJECTIVITY_EXPERIMENT or category == JOIN_EXPERIMENT:
             result_file.write(str(projectivity) + " , " + str(stat) + "\n")
-        elif category == SELECTIVITY_EXPERIMENT or category == OPERATOR_EXPERIMENT or category == VERTICAL_EXPERIMENT or category == SUBSET_EXPERIMENT or category == CACHING_EXPERIMENT:
+        elif category == SELECTIVITY_EXPERIMENT or category == OPERATOR_EXPERIMENT or category == HORIZONTAL_EXPERIMENT or category == SUBSET_EXPERIMENT or category == CACHING_EXPERIMENT:
             result_file.write(str(selectivity) + " , " + str(stat) + "\n")
         elif category == ADAPT_EXPERIMENT or category == REORG_EXPERIMENT or category == HYRISE_EXPERIMENT:
             result_file.write(str(txn_itr) + " , " + str(stat) + "\n")
@@ -1763,18 +1763,18 @@ def operator_eval():
     # COLLECT STATS
     collect_stats(OPERATOR_DIR, "operator.csv", OPERATOR_EXPERIMENT)
 
-# VERTICAL -- EVAL
-def vertical_eval():
+# HORIZONTAL -- EVAL
+def horizontal_eval():
 
     # CLEAN UP RESULT DIR
-    clean_up_dir(VERTICAL_DIR)
+    clean_up_dir(HORIZONTAL_DIR)
 
     # RUN EXPERIMENT
     run_experiment(HYADAPT, SCALE_FACTOR,
-                   TRANSACTION_COUNT, VERTICAL_EXPERIMENT)
+                   TRANSACTION_COUNT, HORIZONTAL_EXPERIMENT)
 
     # COLLECT STATS
-    collect_stats(VERTICAL_DIR, "vertical.csv", VERTICAL_EXPERIMENT)
+    collect_stats(HORIZONTAL_DIR, "horizontal.csv", HORIZONTAL_EXPERIMENT)
 
 # YCSB -- EVAL
 def ycsb_eval():
@@ -1974,7 +1974,7 @@ if __name__ == '__main__':
     parser.add_argument("-p", "--projectivity", help='eval projectivity', action='store_true')
     parser.add_argument("-s", "--selectivity", help='eval selectivity', action='store_true')
     parser.add_argument("-o", "--operator", help='eval operator', action='store_true')
-    parser.add_argument("-v", "--vertical", help='eval vertical', action='store_true')
+    parser.add_argument("-v", "--horizontal", help='eval horizontal', action='store_true')
     #parser.add_argument("-u", "--subset", help='eval subset', action='store_true')
     parser.add_argument("-z", "--adapt", help='eval adapt', action='store_true')
     parser.add_argument("-w", "--weight", help='eval weight', action='store_true')
@@ -1988,7 +1988,7 @@ if __name__ == '__main__':
     parser.add_argument("-a", "--projectivity_plot", help='plot projectivity', action='store_true')
     parser.add_argument("-b", "--selectivity_plot", help='plot selectivity', action='store_true')
     parser.add_argument("-c", "--operator_plot", help='plot operator', action='store_true')
-    parser.add_argument("-d", "--vertical_plot", help='plot vertical', action='store_true')
+    parser.add_argument("-d", "--horizontal_plot", help='plot horizontal', action='store_true')
     #parser.add_argument("-e", "--subset_plot", help='plot subset', action='store_true')
     parser.add_argument("-f", "--adapt_plot", help='plot adapt', action='store_true')
     parser.add_argument("-g", "--weight_plot", help='plot weight', action='store_true')
@@ -2021,11 +2021,11 @@ if __name__ == '__main__':
     if args.operator_plot:
         operator_plot();
 
-    if args.vertical:
-        vertical_eval()
+    if args.horizontal:
+        horizontal_eval()
 
-    if args.vertical_plot:
-        vertical_plot()
+    if args.horizontal_plot:
+        horizontal_plot()
 
     #if args.subset:
     #    subset_eval()
@@ -2083,6 +2083,6 @@ if __name__ == '__main__':
 
     #create_legend()
     #create_bar_legend()
-    #create_vertical_legend()
+    #create_horizontal_legend()
 
 
