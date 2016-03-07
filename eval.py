@@ -953,7 +953,7 @@ def create_hyrise_line_chart(datasets):
     x_mark_offset = x_mark_count/2 - x_mark_count/4
     x_marks = np.arange(0, 1, x_mark_count)
 
-    HYRISE_LABELS = (["Select-H", "Select-L", "Select-H", "Select-L"])
+    HYRISE_LABELS = (["Scan-H", "Scan-L", "Scan-H", "Scan-L"])
 
     for idx, x_mark in enumerate(x_marks):
             ax1.text(x_mark + x_mark_offset,
