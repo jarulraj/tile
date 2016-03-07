@@ -397,6 +397,32 @@ def create_legend():
     figlegend.savefig('legend.pdf')
 
 
+def create_hyrise_legend():
+    fig = pylab.figure()
+    ax1 = fig.add_subplot(111)
+
+    figlegend = pylab.figure(figsize=(6, 0.5))
+    idx = 0
+    lines = [None] * (len(LAYOUTS))
+    data = [1]
+    x_values = [1]
+
+    LABELS = ["Static Layout", "Dynamic Layout"]
+
+    for group in xrange(len(LAYOUTS) - 1):
+        lines[idx], = ax1.plot(x_values, data,
+                               color=OPT_LINE_COLORS[idx], linewidth=OPT_LINE_WIDTH,
+                               marker=OPT_MARKERS[idx], markersize=OPT_MARKER_SIZE, label=str(group))
+
+        idx = idx + 1
+
+    # LEGEND
+    figlegend.legend(lines, LABELS, prop=LEGEND_FP,
+                     loc=1, ncol=4, mode="expand", shadow=OPT_LEGEND_SHADOW,
+                     frameon=False, borderaxespad=0.0, handlelength=4)
+
+    figlegend.savefig('legend_hyrise.pdf')
+
 def create_projectivity_bar_chart(datasets):
     fig = plot.figure()
     ax1 = fig.add_subplot(111)
@@ -807,7 +833,8 @@ def create_adapt_line_chart(datasets):
 
     ADAPT_OPT_LINE_WIDTH = 3.0
     ADAPT_OPT_MARKER_SIZE = 5.0
-
+    ADAPT_OPT_MARKER_FREQUENCY = 10
+    
     # GROUP
     for group_index, group in enumerate(LAYOUTS):
         group_data = []
@@ -819,7 +846,8 @@ def create_adapt_line_chart(datasets):
         LOG.info("%s group_data = %s ", group, str(group_data))
 
         ax1.plot(x_values, group_data, color=OPT_LINE_COLORS[idx], linewidth=ADAPT_OPT_LINE_WIDTH,
-                 marker=OPT_MARKERS[idx], markersize=ADAPT_OPT_MARKER_SIZE, label=str(group))
+                 marker=OPT_MARKERS[idx], markersize=ADAPT_OPT_MARKER_SIZE, 
+                 markevery=ADAPT_OPT_MARKER_FREQUENCY, label=str(group))
 
         idx = idx + 1
 
@@ -847,9 +875,9 @@ def create_adapt_line_chart(datasets):
     x_mark_offset = x_mark_count/2 - x_mark_count/4
     x_marks = np.arange(0, 1, x_mark_count)
 
-    ADAPT_LABELS = (["Select", "Insert", "Select", "Insert",
-                     "Select", "Insert", "Select", "Insert",
-                     "Select", "Insert", "Select", "Insert"])
+    ADAPT_LABELS = (["Scan", "Insert", "Scan", "Insert",
+                     "Scan", "Insert", "Scan", "Insert",
+                     "Scan", "Insert", "Scan", "Insert"])
 
     for idx, x_mark in enumerate(x_marks):
             ax1.text(x_mark + x_mark_offset,
@@ -880,6 +908,7 @@ def create_hyrise_line_chart(datasets):
 
     ADAPT_OPT_LINE_WIDTH = 3.0
     ADAPT_OPT_MARKER_SIZE = 5.0
+    ADAPT_OPT_MARKER_FREQUENCY = 10
 
     # GROUP
     for group_index, group in enumerate(HYRISE_LAYOUTS):
@@ -892,7 +921,8 @@ def create_hyrise_line_chart(datasets):
         LOG.info("%s group_data = %s ", group, str(group_data))
 
         ax1.plot(x_values, group_data, color=OPT_LINE_COLORS[idx], linewidth=ADAPT_OPT_LINE_WIDTH,
-                 marker=OPT_MARKERS[idx], markersize=ADAPT_OPT_MARKER_SIZE, label=str(group))
+                 marker=OPT_MARKERS[idx], markersize=ADAPT_OPT_MARKER_SIZE, 
+                 markevery=ADAPT_OPT_MARKER_FREQUENCY, label=str(group))
 
         idx = idx + 1
 
@@ -901,8 +931,11 @@ def create_hyrise_line_chart(datasets):
     makeGrid(ax1)
 
     # Y-AXIS
+    YAXIS_MIN = pow(2.0, 7)
+    YAXIS_MAX = pow(2.0, 12)    
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
+    ax1.set_ylim([YAXIS_MIN, YAXIS_MAX])
     ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
     ax1.set_yscale('log', basey=2)
 
@@ -915,12 +948,12 @@ def create_hyrise_line_chart(datasets):
     #    ax1.axvline(major_tick, color='0.5', linestyle='dashed', linewidth=ADAPT_OPT_LINE_WIDTH)
 
     # LABELS
-    y_mark = 0.9
+    y_mark = 0.85
     x_mark_count = 1.0/NUM_HYRISE_TESTS
     x_mark_offset = x_mark_count/2 - x_mark_count/4
     x_marks = np.arange(0, 1, x_mark_count)
 
-    HYRISE_LABELS = (["Select-H", "Select-L", "Select-H", "Select-L"])
+    HYRISE_LABELS = (["Scan-H", "Scan-L", "Scan-H", "Scan-L"])
 
     for idx, x_mark in enumerate(x_marks):
             ax1.text(x_mark + x_mark_offset,
@@ -1384,12 +1417,15 @@ def subset_plot():
 def adapt_plot():
 
     ADAPT_COLUMN_COUNT = COLUMN_COUNTS[1]
+    #ADAPT_SEED = 0
+    #random.seed(ADAPT_SEED)
     datasets = []
 
     for layout in LAYOUTS:
         data_file = ADAPT_DIR + "/" + str(ADAPT_COLUMN_COUNT) + "/" + layout + "/" + "adapt.csv"
 
         dataset = loadDataFile(ADAPT_QUERY_COUNT, 2, data_file)
+        #random.shuffle(dataset)
         datasets.append(dataset)
 
     fig = create_adapt_line_chart(datasets)
@@ -1528,7 +1564,7 @@ def hyrise_plot():
 
     fileName = "hyrise.pdf"
 
-    saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH * 3, height=OPT_GRAPH_HEIGHT/1.5)
+    saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH * 3, height=OPT_GRAPH_HEIGHT/2.0)
 
 # CONCURRENCY -- PLOT
 def concurrency_plot():
@@ -2084,5 +2120,6 @@ if __name__ == '__main__':
     #create_legend()
     #create_bar_legend()
     #create_horizontal_legend()
+    create_hyrise_legend()
 
 
