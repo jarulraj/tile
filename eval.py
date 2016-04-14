@@ -938,6 +938,7 @@ def create_hyrise_line_chart(datasets):
     ax1.set_ylim([YAXIS_MIN, YAXIS_MAX])
     ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
     ax1.set_yscale('log', basey=2)
+    ax1.set_yticklabels(['64', '128', '256', '512', '1024', '2048','4096'])
 
     # X-AXIS
     ax1.set_xlabel("Query Sequence", fontproperties=LABEL_FP)
@@ -1074,13 +1075,16 @@ def create_reorg_line_chart(datasets):
 
     # Y-AXIS
     YMIN = pow(10, 2)
-    YMAX = pow(10, 5)
+    YMAX = pow(10, 6)
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
     ax1.set_ylabel("Execution time (ms)", fontproperties=SMALL_LABEL_FP)
-    ax1.set_ylim((YMIN, YMAX))
-    ax1.set_yscale('log', basey=10)
-
+    #ax1.set_ylim((YMIN, YMAX))
+    ax1.set_yscale('log', nonposy='clip')
+    #ax1.yaxis.set_major_locator(LogLocator(base = 10.0))
+    ax1.set_yticklabels(['10', '100', '1000', '10000', '100000'])
+    ax1.minorticks_off()
+    
     # X-AXIS
     REORG_INTERVAL = 25
     ax1.set_xlabel("Query Sequence", fontproperties=SMALL_LABEL_FP)
@@ -1216,7 +1220,8 @@ def create_concurrency_line_chart(datasets):
     ax1.set_xlim([XAXIS_MIN, XAXIS_MAX])
     ax1.set_xlabel("Number of Threads", fontproperties=LABEL_FP)
     ax1.set_xscale('log', basex=2)
-    ax1.set_xticks(THREAD_COUNTS)
+    ax1.set_xticklabels([0, 0, 1, 2, 4, 8, 16])
+    ax1.minorticks_off()
 
     for label in ax1.get_yticklabels() :
         label.set_fontproperties(TICK_FP)
