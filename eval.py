@@ -432,7 +432,7 @@ def create_projectivity_bar_chart(datasets):
     x_labels = PROJECTIVITY
 
     layouts = ["NSM", "DSM", "FSM"]
-    
+
     ind = np.arange(N)
     margin = 0.15
     width = ((1.0 - 2 * margin) / N)
@@ -461,10 +461,10 @@ def create_projectivity_bar_chart(datasets):
     axes = ax1.get_axes()
     #axes.set_ylim(0.01, 1000000)
     makeGrid(ax1)
-    
+
     # Y-AXIS
     YAXIS_MIN = 0
-    YAXIS_MAX = 45000    
+    YAXIS_MAX = 45000
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
     ax1.set_ylabel("Execution time (s)", fontproperties=LABEL_FP)
@@ -517,7 +517,7 @@ def create_selectivity_line_chart(datasets):
 
     # Y-AXIS
     #YAXIS_MIN = pow(2.0, 13)
-    #YAXIS_MAX = pow(2.0, 19)    
+    #YAXIS_MAX = pow(2.0, 19)
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
     ax1.set_ylabel("Execution time (s)", fontproperties=LABEL_FP)
@@ -734,7 +734,7 @@ def create_subset_bar_chart(datasets):
     makeGrid(ax1)
 
     # Y-AXIS
-    ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
+    ax1.set_ylabel("Execution time (s)", fontproperties=LABEL_FP)
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
 
@@ -801,7 +801,7 @@ def create_ycsb_bar_chart(datasets):
     makeGrid(ax1)
 
     # Y-AXIS
-    ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
+    ax1.set_ylabel("Execution time (s)", fontproperties=LABEL_FP)
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
 
@@ -834,7 +834,7 @@ def create_adapt_line_chart(datasets):
     ADAPT_OPT_LINE_WIDTH = 3.0
     ADAPT_OPT_MARKER_SIZE = 5.0
     ADAPT_OPT_MARKER_FREQUENCY = 10
-    
+
     # GROUP
     for group_index, group in enumerate(LAYOUTS):
         group_data = []
@@ -846,7 +846,7 @@ def create_adapt_line_chart(datasets):
         LOG.info("%s group_data = %s ", group, str(group_data))
 
         ax1.plot(x_values, group_data, color=OPT_LINE_COLORS[idx], linewidth=ADAPT_OPT_LINE_WIDTH,
-                 marker=OPT_MARKERS[idx], markersize=ADAPT_OPT_MARKER_SIZE, 
+                 marker=OPT_MARKERS[idx], markersize=ADAPT_OPT_MARKER_SIZE,
                  markevery=ADAPT_OPT_MARKER_FREQUENCY, label=str(group))
 
         idx = idx + 1
@@ -858,7 +858,7 @@ def create_adapt_line_chart(datasets):
     # Y-AXIS
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
-    ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
+    ax1.set_ylabel("Execution time (s)", fontproperties=LABEL_FP)
     #ax1.set_yscale('log', basey=10)
 
     # X-AXIS
@@ -921,7 +921,7 @@ def create_hyrise_line_chart(datasets):
         LOG.info("%s group_data = %s ", group, str(group_data))
 
         ax1.plot(x_values, group_data, color=OPT_LINE_COLORS[idx], linewidth=ADAPT_OPT_LINE_WIDTH,
-                 marker=OPT_MARKERS[idx], markersize=ADAPT_OPT_MARKER_SIZE, 
+                 marker=OPT_MARKERS[idx], markersize=ADAPT_OPT_MARKER_SIZE,
                  markevery=ADAPT_OPT_MARKER_FREQUENCY, label=str(group))
 
         idx = idx + 1
@@ -932,11 +932,11 @@ def create_hyrise_line_chart(datasets):
 
     # Y-AXIS
     YAXIS_MIN = pow(2.0, 7)
-    YAXIS_MAX = pow(2.0, 12)    
+    YAXIS_MAX = pow(2.0, 12)
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
     ax1.set_ylim([YAXIS_MIN, YAXIS_MAX])
-    ax1.set_ylabel("Execution time (ms)", fontproperties=LABEL_FP)
+    ax1.set_ylabel("Execution time (s)", fontproperties=LABEL_FP)
     ax1.set_yscale('log', basey=2)
     ax1.set_yticklabels(['64', '128', '256', '512', '1024', '2048','4096'])
 
@@ -1078,13 +1078,13 @@ def create_reorg_line_chart(datasets):
     YMAX = pow(10, 6)
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
-    ax1.set_ylabel("Execution time (ms)", fontproperties=SMALL_LABEL_FP)
+    ax1.set_ylabel("Execution time (s)", fontproperties=SMALL_LABEL_FP)
     #ax1.set_ylim((YMIN, YMAX))
     ax1.set_yscale('log', nonposy='clip')
     #ax1.yaxis.set_major_locator(LogLocator(base = 10.0))
     ax1.set_yticklabels(['10', '100', '1000', '10000', '100000'])
     ax1.minorticks_off()
-    
+
     # X-AXIS
     REORG_INTERVAL = 25
     ax1.set_xlabel("Query Sequence", fontproperties=SMALL_LABEL_FP)
@@ -2125,6 +2125,6 @@ if __name__ == '__main__':
     #create_legend()
     #create_bar_legend()
     #create_horizontal_legend()
-    create_hyrise_legend()
+    #create_hyrise_legend()
 
 
