@@ -57,3 +57,4 @@ misc/linux-examples/*
 #results/
 outputfile*
 .project
+/tile.synctex.gz

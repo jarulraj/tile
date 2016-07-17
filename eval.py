@@ -69,12 +69,9 @@ OPT_GRAPH_WIDTH = 400
 
 # Make a list by cycling through the colors you care about
 # to match the length of your data.
-
 NUM_COLORS = 5
 COLOR_MAP = ( '#F58A87', '#80CA86', '#9EC9E9', '#FED113', '#D89761' )
 
-
-#COLOR_MAP = ('#F15854', '#9C9F84', '#F7DCB4', '#991809', '#5C755E', '#A97D5D')
 OPT_COLORS = COLOR_MAP
 
 OPT_GRID_COLOR = 'gray'
@@ -84,13 +81,24 @@ OPT_PATTERNS = ([ "////", "////", "o", "o", "\\\\" , "\\\\" , "//////", "//////"
 
 OPT_LABEL_WEIGHT = 'bold'
 OPT_LINE_COLORS = COLOR_MAP
-OPT_LINE_WIDTH = 6.0
-OPT_MARKER_SIZE = 10.0
-DATA_LABELS = []
+OPT_LINE_WIDTH = 3.0
+OPT_MARKER_SIZE = 6.0
 
+AXIS_LINEWIDTH = 1.3
+BAR_LINEWIDTH = 1.2
 
-OPT_STACK_COLORS = ('#AFAFAF', '#F15854', '#5DA5DA', '#60BD68',  '#B276B2', '#DECF3F', '#F17CB0', '#B2912F', '#FAA43A')
-OPT_LINE_STYLES= ('-', ':', '--', '-.')
+# SET FONT
+
+LABEL_FONT_SIZE = 14
+TICK_FONT_SIZE = 12
+TINY_FONT_SIZE = 8
+LEGEND_FONT_SIZE = 16
+
+SMALL_LABEL_FONT_SIZE = 10
+SMALL_LEGEND_FONT_SIZE = 10
+
+AXIS_LINEWIDTH = 1.3
+BAR_LINEWIDTH = 1.2
 
 # SET FONT
 
@@ -835,6 +843,8 @@ def create_adapt_line_chart(datasets):
     ADAPT_OPT_MARKER_SIZE = 5.0
     ADAPT_OPT_MARKER_FREQUENCY = 10
 
+    LABELS = ["NSM", "DSM", "FSM"]
+
     # GROUP
     for group_index, group in enumerate(LAYOUTS):
         group_data = []
@@ -847,7 +857,7 @@ def create_adapt_line_chart(datasets):
 
         ax1.plot(x_values, group_data, color=OPT_LINE_COLORS[idx], linewidth=ADAPT_OPT_LINE_WIDTH,
                  marker=OPT_MARKERS[idx], markersize=ADAPT_OPT_MARKER_SIZE,
-                 markevery=ADAPT_OPT_MARKER_FREQUENCY, label=str(group))
+                 markevery=ADAPT_OPT_MARKER_FREQUENCY, label=LABELS[idx])
 
         idx = idx + 1
 
@@ -859,18 +869,27 @@ def create_adapt_line_chart(datasets):
     ax1.yaxis.set_major_locator(LinearLocator(YAXIS_TICKS))
     ax1.minorticks_off()
     ax1.set_ylabel("Execution time (s)", fontproperties=LABEL_FP)
+    YMIN = 0
+    YMAX = 2500
+    ax1.set_ylim([YMIN, YMAX])
     #ax1.set_yscale('log', basey=10)
 
     # X-AXIS
     ax1.set_xlabel("Query Sequence", fontproperties=LABEL_FP)
-    major_ticks = np.arange(0, ADAPT_QUERY_COUNT + 1, REPEAT_ADAPT_TEST)
+    major_ticks = np.arange(0, ADAPT_QUERY_COUNT + 1, REPEAT_ADAPT_TEST * 2)
     ax1.set_xticks(major_ticks)
+
+    legend = ax1.legend(loc='upper center', prop=LABEL_FP,
+                        ncol=3,
+                        shadow=OPT_LEGEND_SHADOW,
+                        frameon=False, borderaxespad=0.0,
+                        handleheight=1.5, handlelength=2)
 
     #for major_tick in major_ticks[1:-1]:
     #    ax1.axvline(major_tick, color='0.5', linestyle='dashed', linewidth=ADAPT_OPT_LINE_WIDTH)
 
     # LABELS
-    y_mark = 0.9
+    y_mark = 0.72
     x_mark_count = 1.0/NUM_ADAPT_TESTS
     x_mark_offset = x_mark_count/2 - x_mark_count/4
     x_marks = np.arange(0, 1, x_mark_count)
@@ -1437,7 +1456,7 @@ def adapt_plot():
 
     fileName = "adapt.pdf"
 
-    saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH * 3, height=OPT_GRAPH_HEIGHT/1.5)
+    saveGraph(fig, fileName, width= OPT_GRAPH_WIDTH * 2, height=OPT_GRAPH_HEIGHT/1.5)
 
 # WEIGHT -- PLOT
 def weight_plot():
